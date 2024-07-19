@@ -1,2 +1,2 @@
-// Start Express
-require('./express/express');
+// Start Web Socket
+require('./socket');
