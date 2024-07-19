@@ -1,1 +1,2 @@
-console.log('test');
+// Start Express
+require('./express/express');

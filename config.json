@@ -1,0 +1,15 @@
+{
+  "express": {
+    "port": 3000
+  },
+  "webServer": {
+    "url": "http://localhost:3001"
+  },
+  "uploadConfig": {
+    "maxFileSizeMB": 5,
+    "allowedFileTypes" : [
+      {"extension":"xls","typename":"xls","mime":"application/vnd.ms-excel"},
+      {"extension":"xlsx","typename":"xlsx","mime":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+    ]
+  }
+}
