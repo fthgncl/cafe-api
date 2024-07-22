@@ -1,0 +1,43 @@
+const WebSocket = require('ws');
+const {port} = require('../config.json').socket;
+const wss = new WebSocket.Server({port});
+
+const login = require('./login');
+const createUser = require('./createUser');
+
+function parseJSON(message) {
+    try {
+        return JSON.parse(message);
+    } catch (e) {
+        console.error('Invalid JSON:', message);
+        return null;
+    }
+}
+
+wss.on('connection', (ws) => {
+    ws.on('message', (data) => {
+
+        const dataJSON = parseJSON(data);
+
+        if (!dataJSON) {
+            ws.send(JSON.stringify({error: 'Invalid JSON format'}));
+            return;
+        }
+
+        switch (dataJSON.type) {
+            case 'auth':
+                login(ws, dataJSON);
+                break;
+
+            case 'createUser':
+                createUser(ws, dataJSON);
+                break;
+
+            default:
+                console.error('Unknown message type:', type);
+                ws.send(JSON.stringify({error: 'Unknown message type'}));
+        }
+    });
+});
+
+console.log(`WebSocket server is running on ws://localhost:${port}`);
