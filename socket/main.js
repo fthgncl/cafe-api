@@ -18,7 +18,6 @@ wss.on('connection', (ws) => {
 
     ws.on('message', (data) => {
         const dataJSON = parseJSON(data);
-        console.log(dataJSON);
 
         if (!dataJSON) {
             ws.send(JSON.stringify({ error: 'Invalid JSON format' }));

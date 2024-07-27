@@ -2,24 +2,42 @@
   "express": {
     "port": 3000
   },
+
   "socket": {
     "port": 8080
   },
+
   "webServer": {
     "url": "http://localhost:3001"
   },
+
   "database": {
     "host": "mongodb://127.0.0.1",
     "port": 27017,
     "name": "cafe-db"
   },
+
   "tokenLifeTimeMinute": 60,
+
   "cryptoSecretKey": "1908Cafe!",
-  "uploadConfig": {
-    "maxFileSizeMB": 5,
-    "allowedFileTypes" : [
-      {"extension":"xls","typename":"xls","mime":"application/vnd.ms-excel"},
-      {"extension":"xlsx","typename":"xlsx","mime":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
-    ]
+
+  "permissions": {
+    "sys_admin": {
+      "code": "a",
+      "name": "Sistem yöneticisi",
+      "description": "Tüm sistem kaynaklarına tam erişim sağlar."
+    },
+
+    "admin": {
+      "code": "b",
+      "name": "Yönetici",
+      "description": "..."
+    },
+
+    "user_editor": {
+      "code": "c",
+      "name": "Kullanıcı düzenleyici",
+      "description": "..."
+    }
   }
 }
