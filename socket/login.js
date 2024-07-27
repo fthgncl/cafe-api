@@ -30,7 +30,12 @@ module.exports = function login(socket, data) {
                 sendSocketMessage(socket, messageType, {
                     success: true,
                     message: 'Başarıyla giriş yaptınız.',
-                    token
+                    accountProps : {
+                        firstName : user.firstName,
+                        userName : user.userName,
+                        permissions: user.permissions,
+                        token
+                    }
                 });
 
             } else {
