@@ -2,6 +2,8 @@ const User = require('../datebase/models/Users');
 const bcrypt = require('bcryptjs');
 require('../helper/stringTurkish');
 
+const { sendSocketMessage } = require('../helper/socket');
+
 module.exports = async function createUser(socket, {message, type}) {
 
     const user = new User(message);
@@ -15,7 +17,6 @@ module.exports = async function createUser(socket, {message, type}) {
     if (user.password) {
         await bcrypt.hash(user.password, 10)
             .then(bcryptPass => {
-                console.log(bcryptPass);
                 user.password = bcryptPass;
             });
     }
@@ -23,20 +24,18 @@ module.exports = async function createUser(socket, {message, type}) {
     // TODO: Bu işlemi sadece yönetici yapabilecek şekilde ayarla
     user.save()
         .then(saveData => {
-            socket.send(JSON.stringify({
+            sendSocketMessage(socket,type,{
                 status: 'success',
                 message: 'Kayıt başarılı',
-                type,
                 data: saveData
-            }));
+            })
         })
         .catch(error => {
-            socket.send(JSON.stringify({
+            sendSocketMessage(socket,type,{
                 status: 'error',
                 message: 'Kayıt başarısız',
-                type,
                 error
-            }));
+            })
         });
 
 }

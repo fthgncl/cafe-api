@@ -13,6 +13,8 @@
     "port": 27017,
     "name": "cafe-db"
   },
+  "tokenLifeTimeMinute": 60,
+  "cryptoSecretKey": "1908Cafe!",
   "uploadConfig": {
     "maxFileSizeMB": 5,
     "allowedFileTypes" : [

@@ -1,25 +1,50 @@
+const User = require('../datebase/models/Users');
+const bcrypt = require('bcryptjs');
+const { sendSocketMessage } = require('../helper/socket');
+const { tokenLifeTimeMinute } = require('../config.json');
+const { encryptData } = require('../helper/crypto');
 
-const validUsername = 'admin';  // TODO: Veri tabanına al
-const validPassword = 'password123';  // TODO: Veri tabanına al
+module.exports = function login(socket, data) {
+    const { username, password } = data.message;
+    const messageType = 'login';
 
-module.exports = function login(socket,message){
+    if (!username || !password) {
+        sendSocketMessage(socket, messageType, {
+            success: false,
+            message: 'Lütfen kullanıcı adı ve şifrenizi giriniz.'
+        } );
+        return;
+    }
 
-    console.log('Socket mesajı geldi : ',message)
+    User.findOne({ username })
+        .then(async user => {
+            if (user && await bcrypt.compare(password, user.password)) {
 
+                const userTokenData = {
+                    id : user.id,
+                    exp : tokenLifeTimeMinute * 60000 + Date.now()
+                }
 
-    // const decryptedMessage = decrypt(message)
-    //
-    // // İlk gelen mesaj kimlik doğrulama bilgisi olmalıdır
-    // if (decryptedMessage.type === 'auth') {
-    //     if (decryptedMessage.username === validUsername && decryptedMessage.password === validPassword) {
-    //         socket.isAuthenticated = true;
-    //         socket.send(JSON.stringify(encrypt('Authenticated')));
-    //     } else {
-    //         socket.send(JSON.stringify(encrypt('Authentication Failed')));
-    //         socket.close();
-    //     }
-    // } else if (socket.isAuthenticated) {
-    //     // Kimlik doğrulandıktan sonra gelen mesajları işleme
-    //     console.log(`Received message => ${decryptedMessage}`);
-    // }
+                const token = encryptData(JSON.stringify(userTokenData));
+
+                sendSocketMessage(socket, messageType, {
+                    success: true,
+                    message: 'Başarıyla giriş yaptınız.',
+                    token
+                });
+
+            } else {
+                sendSocketMessage(socket, messageType, {
+                    success: false,
+                    message: 'Kullanıcı adı veya şifre hatalı.'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Veritabanı hatası:', error);
+            sendSocketMessage(socket, messageType, {
+                success: false,
+                message: 'Sistemsel bir hata oluştu, lütfen sistem yöneticisine haber veriniz.'
+            });
+        });
 }
