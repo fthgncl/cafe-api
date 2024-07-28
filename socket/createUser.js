@@ -1,6 +1,5 @@
 const User = require('../datebase/models/Users');
 const bcrypt = require('bcryptjs');
-const { decryptData } = require('../helper/crypto');
 const { checkUserRoles } = require('../helper/permissionManager');
 require('../helper/stringTurkish');
 
@@ -11,7 +10,7 @@ module.exports = async function createUser(socket, {message, type, token}) {
     if (!token) {
         sendSocketMessage(socket, type, {
             status: 'error',
-            message: 'Yetkisiz'
+            message: 'Token parametresi gönderilmedi'
         });
         return;
     }
@@ -53,14 +52,14 @@ module.exports = async function createUser(socket, {message, type, token}) {
         .then(saveData => {
             sendSocketMessage(socket,type,{
                 status: 'success',
-                message: 'Kayıt başarılı',
+                message: `${user.firstname} ${user.lastname} yeni kullanıcı olarak eklendi`,
                 data: saveData
             })
         })
         .catch(error => {
             sendSocketMessage(socket,type,{
                 status: 'error',
-                message: 'Kayıt başarısız',
+                message: 'Kullanıcı kaydı yapılamadı',
                 error
             })
         });

@@ -20,7 +20,7 @@ const UserSchema = new Schema({
     phone: {type: String, required: true, unique: true},
     password: {type: String, minlength: 6, required: true},
     createdDate: {type: Date, default: Date.now},
-    permissions: { type: String, default: "" }
+    permissions: { type: String, default: "", required: true }
 });
 
 module.exports = mongoose.model('users', UserSchema);
