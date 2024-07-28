@@ -38,11 +38,11 @@ module.exports = async function createUser(socket, {message, type, token}) {
 
     const user = new User(message);
 
-    if (user.firstName) {
-        user.firstName = user.firstName.toUpperOnlyFirstChar();
+    if (user.firstname) {
+        user.firstname = user.firstname.toUpperOnlyFirstChar();
     }
-    if (user.lastName) {
-        user.lastName = user.lastName.toUpperOnlyFirstChar();
+    if (user.lastname) {
+        user.lastname = user.lastname.toUpperOnlyFirstChar();
     }
     if (user.password) {
         await bcrypt.hash(user.password, 10)

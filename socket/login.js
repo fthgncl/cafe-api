@@ -20,9 +20,10 @@ module.exports = function login(socket, data) {
         .then(async user => {
             if (user && await bcrypt.compare(password, user.password)) {
 
+                const exp = tokenLifeTimeMinute * 60000 + Date.now();
                 const userTokenData = {
                     id : user.id,
-                    exp : tokenLifeTimeMinute * 60000 + Date.now()
+                    exp
                 }
 
                 const token = encryptData(JSON.stringify(userTokenData));
@@ -31,10 +32,11 @@ module.exports = function login(socket, data) {
                     success: true,
                     message: 'Başarıyla giriş yaptınız.',
                     accountProps : {
-                        firstName : user.firstName,
-                        userName : user.userName,
+                        firstname : user.firstname,
+                        username : user.username,
                         permissions: user.permissions,
-                        token
+                        token,
+                        exp
                     }
                 });
 
