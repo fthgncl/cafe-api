@@ -16,9 +16,7 @@ module.exports = async function createUser(socket, {message, type, token}) {
         return;
     }
 
-    const tokenData = JSON.parse(await decryptData(token))
-
-    if ( Date.now() > tokenData.exp ) {
+    if ( Date.now() > token.exp ) {
         sendSocketMessage(socket, type, {
             status: 'error',
             message: 'Oturum zaman aşımına uğradı'
@@ -26,7 +24,7 @@ module.exports = async function createUser(socket, {message, type, token}) {
         return;
     }
 
-    const hasRequiredRoles = await checkUserRoles(tokenData.id, ['sys_admin']);
+    const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin']);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',

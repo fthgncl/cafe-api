@@ -1,7 +1,8 @@
 const WebSocket = require('ws');
 const { port } = require('../config.json').socket;
 const wss = new WebSocket.Server({ port });
-const { decryptData } = require('../helper/crypto');
+const { validateToken, getTokenData,updateToken } = require('../helper/token');
+const { sendSocketMessage } = require('../helper/socket');
 
 const login = require('./login');
 const createUser = require('./createUser');
@@ -15,41 +16,49 @@ function parseJSON(message) {
     }
 }
 
-function validateToken(token) {
-    try {
-        const tokenData = token ? JSON.parse(decryptData('token')) : {};
-        return 'exp' in tokenData && typeof tokenData.exp === 'number' && Date.now() < tokenData.exp;
-    } catch (error) {
-        console.error('Token validation failed:', error);
-        return false;
-    }
-}
-
-
 wss.on('connection', (ws) => {
 
     ws.on('message', (data) => {
-        const dataJSON = parseJSON(data);
+        let dataJSON = parseJSON(data);
 
         if (!dataJSON) {
-            ws.send(JSON.stringify({ error: 'Invalid JSON format' }));
+            sendSocketMessage(ws,'messageError',{ error: 'Invalid JSON format' });
             return;
         }
 
-        console.log(validateToken(dataJSON.token));
+        const tokenData = getTokenData(dataJSON.token);
+        const tokenIsActive = validateToken(tokenData);
+
+        dataJSON.token = tokenData;
+
+        if ( tokenIsActive )
+            updateToken(ws,tokenData);
+
+
+
+
+        // sendSocketMessage(ws,'updateToken',)
 
         switch (dataJSON.type) {
             case 'login':
-                login(ws, dataJSON);
+                if (!tokenIsActive) {
+                    login(ws, dataJSON);
+                } else {
+                    sendSocketMessage(ws,dataJSON.type,{ error: 'Already logged in' });
+                }
                 break;
 
             case 'createUser':
-                createUser(ws, dataJSON);
+                if (tokenIsActive) {
+                    createUser(ws, dataJSON);
+                } else {
+                    sendSocketMessage(ws,dataJSON.type,{ error: 'Invalid or expired token' });
+                }
                 break;
 
             default:
                 console.error('Unknown message type:', dataJSON.type);
-                ws.send(JSON.stringify({ error: 'Unknown message type' }));
+                sendSocketMessage(ws,'messageError',{ error: 'Unknown message type' });
         }
     });
 
