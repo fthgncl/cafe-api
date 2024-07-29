@@ -1,8 +1,8 @@
 const Product = require('../database/models/Products');
-const { checkUserRoles } = require('../helper/permissionManager');
+const {checkUserRoles} = require('../helper/permissionManager');
+const {sendSocketMessage} = require('../helper/socket');
+const {handleProductChange} = require("./product");
 require('../helper/stringTurkish');
-
-const { sendSocketMessage } = require('../helper/socket');
 
 module.exports = async function createProduct(socket, { message, type, token }) {
 
@@ -22,7 +22,7 @@ module.exports = async function createProduct(socket, { message, type, token }) 
         return;
     }
 
-    const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin']);
+    const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin','admin']);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',
@@ -53,6 +53,7 @@ module.exports = async function createProduct(socket, { message, type, token }) 
                 message: `${product.productname} ürün listesine eklenmiştir.`,
                 data: saveData
             });
+            handleProductChange();
         })
         .catch(error => {
             sendSocketMessage(socket, type, {

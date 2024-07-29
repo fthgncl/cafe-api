@@ -1,6 +1,5 @@
 const User = require('../database/models/Users');
 const {permissions} = require('../config.json');
-const {sendSocketMessage} = require("./socket");
 
 function addUserPermissions(userId, newPermissions) {
     return new Promise((resolve, reject) => {
