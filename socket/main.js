@@ -33,7 +33,7 @@ wss.on('connection', (ws) => {
         dataJSON.token = tokenData;
 
         if (tokenIsActive) {
-            //updateToken(ws, tokenData);
+           updateToken(ws, tokenData);
         }
 
 

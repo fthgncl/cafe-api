@@ -22,8 +22,14 @@ function getTokenData(token){
 
 function updateToken(socket,tokenData){
     const exp = tokenLifeTimeMinute * 60000 + Date.now();
-    const newToken = { ...tokenData, exp }
-    sendSocketMessage(socket, 'updateToken', encryptData(JSON.stringify(newToken)) );
+    const newTokenData = { ...tokenData, exp }
+    const newToken = encryptData(JSON.stringify(newTokenData))
+    const newUserProps = {
+        token : newToken,
+        exp
+    }
+    console.log('token başladı | New user props : ',newUserProps);
+    sendSocketMessage(socket, 'updateToken', newUserProps);
 }
 
 module.exports = { validateToken, getTokenData, updateToken }
