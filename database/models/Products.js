@@ -5,6 +5,7 @@ const ProductSchema = new Schema({
     productname: {
         type: String,
         required: true,
+        unique: true,
         maxlength: [20, '`{PATH}` alanı ({VALUE}), ({MAXLENGTH}) karakterden küçük olmalıdır'],
         minlength: [1, '`{PATH}` alanı ({VALUE}), ({MINLENGTH}) karakterden büyük olmalıdır'],
     },
