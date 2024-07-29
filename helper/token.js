@@ -28,7 +28,6 @@ function updateToken(socket,tokenData){
         token : newToken,
         exp
     }
-    console.log('token başladı | New user props : ',newUserProps);
     sendSocketMessage(socket, 'updateToken', newUserProps);
 }
 

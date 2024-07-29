@@ -1,15 +1,15 @@
-const Product = require('../datebase/models/Products');
+const Product = require('../database/models/Products');
 const { checkUserRoles } = require('../helper/permissionManager');
 require('../helper/stringTurkish');
 
 const { sendSocketMessage } = require('../helper/socket');
 
 module.exports = async function createProduct(socket, { message, type, token }) {
-    console.log(message,type,token);
+
     if (!token) {
         sendSocketMessage(socket, type, {
             status: 'error',
-            message: 'Token parametresi gönderilmedi'
+            message: 'Geçersiz istek: Token parametresi sağlanmamış.'
         });
         return;
     }
@@ -17,7 +17,7 @@ module.exports = async function createProduct(socket, { message, type, token }) 
     if (Date.now() > token.exp) {
         sendSocketMessage(socket, type, {
             status: 'error',
-            message: 'Oturum zaman aşımına uğradı'
+            message: 'Oturum süresi dolmuş. Lütfen tekrar giriş yapınız.'
         });
         return;
     }
@@ -26,7 +26,7 @@ module.exports = async function createProduct(socket, { message, type, token }) 
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',
-            message: 'Ürün oluşturmak için yetkiniz yok'
+            message: 'Bu işlemi gerçekleştirmek için yeterli yetkiniz bulunmuyor.'
         });
         return;
     }
@@ -50,14 +50,14 @@ module.exports = async function createProduct(socket, { message, type, token }) 
         .then(saveData => {
             sendSocketMessage(socket, type, {
                 status: 'success',
-                message: `Ürün ${product.productname} başarıyla eklendi`,
+                message: `${product.productname} ürün listesine eklenmiştir.`,
                 data: saveData
             });
         })
         .catch(error => {
             sendSocketMessage(socket, type, {
                 status: 'error',
-                message: 'Ürün kaydı yapılamadı',
+                message: 'Ürün kaydında bir hata oluştu. Lütfen tekrar deneyiniz.',
                 error
             });
         });
