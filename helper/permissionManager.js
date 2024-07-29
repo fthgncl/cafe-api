@@ -1,4 +1,4 @@
-const User = require('../datebase/models/Users');
+const User = require('../database/models/Users');
 const {permissions} = require('../config.json');
 const {sendSocketMessage} = require("./socket");
 

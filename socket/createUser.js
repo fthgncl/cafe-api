@@ -1,4 +1,4 @@
-const User = require('../datebase/models/Users');
+const User = require('../database/models/Users');
 const bcrypt = require('bcryptjs');
 const { checkUserRoles } = require('../helper/permissionManager');
 require('../helper/stringTurkish');

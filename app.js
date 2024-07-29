@@ -1,5 +1,5 @@
 // Connect Data Base
-require('./datebase/database')()
+require('./database/database')()
     .then(result => console.log(result.message))
     .catch(error => console.log(error.message))
 

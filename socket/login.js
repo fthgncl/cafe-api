@@ -1,4 +1,4 @@
-const User = require('../datebase/models/Users');
+const User = require('../database/models/Users');
 const bcrypt = require('bcryptjs');
 const { sendSocketMessage } = require('../helper/socket');
 const { tokenLifeTimeMinute } = require('../config.json');
