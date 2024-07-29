@@ -1,14 +1,19 @@
 const WebSocket = require('ws');
 const {port} = require('../config.json').socket;
 const wss = new WebSocket.Server({port});
+const {setWebSocketServer} = require("../helper/databaseChangesNotifier");
 const {validateToken, getTokenData, updateToken} = require('../helper/token');
 const {sendSocketMessage} = require('../helper/socket');
 
 const login = require('./login');
 const createUser = require('./createUser');
 const createProduct = require('./createProduct');
+const getProducts = require('./getProducts');
+
+setWebSocketServer(wss);
 
 function parseJSON(message) {
+
     try {
         return JSON.parse(message);
     } catch (e) {
@@ -53,6 +58,10 @@ wss.on('connection', (ws) => {
 
                 case 'createProduct':
                     createProduct(ws, dataJSON);
+                    break;
+
+                case 'getProducts':
+                    getProducts(ws, dataJSON);
                     break;
 
                 default:

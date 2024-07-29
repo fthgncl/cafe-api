@@ -1,26 +1,10 @@
 const Product = require('../database/models/Products');
 const {checkUserRoles} = require('../helper/permissionManager');
 const {sendSocketMessage} = require('../helper/socket');
-const {handleProductChange} = require("./product");
+const {handleChangeProducts} = require("../helper/databaseChangesNotifier");
 require('../helper/stringTurkish');
 
 module.exports = async function createProduct(socket, { message, type, token }) {
-
-    if (!token) {
-        sendSocketMessage(socket, type, {
-            status: 'error',
-            message: 'Geçersiz istek: Token parametresi sağlanmamış.'
-        });
-        return;
-    }
-
-    if (Date.now() > token.exp) {
-        sendSocketMessage(socket, type, {
-            status: 'error',
-            message: 'Oturum süresi dolmuş. Lütfen tekrar giriş yapınız.'
-        });
-        return;
-    }
 
     const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin','admin']);
     if (!hasRequiredRoles) {
@@ -53,7 +37,7 @@ module.exports = async function createProduct(socket, { message, type, token }) 
                 message: `${product.productname} ürün listesine eklenmiştir.`,
                 data: saveData
             });
-            handleProductChange();
+            handleChangeProducts();
         })
         .catch(error => {
             sendSocketMessage(socket, type, {
