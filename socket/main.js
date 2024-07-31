@@ -23,7 +23,7 @@ function parseJSON(message) {
 }
 
 wss.on('connection', (ws) => {
-
+    console.log('Cihaz Bağlandı');
     ws.on('message', (data) => {
         let dataJSON = parseJSON(data);
 
