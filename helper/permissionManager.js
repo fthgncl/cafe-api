@@ -77,11 +77,14 @@ function checkRoles(permissionsString) {
     return roles;
 }
 
-async function checkUserRoles(userId, roles, fullMatch = false) {
+async function checkUserRoles(userId, roles = ['sys_admin'], fullMatch = false) {
     try {
         const data = await readUserPermissions(userId);
         const userPermissions = data.permissions;
         const userRoles = checkRoles(userPermissions);
+
+        if (userRoles.includes('sys_admin'))
+            return true;
 
         if (fullMatch)
             return roles.every(role => userRoles.includes(role));    // roles array'ında bulunan her bir index userRoles array'ında da bulunuyorsa true döner

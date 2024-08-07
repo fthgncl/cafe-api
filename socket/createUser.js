@@ -23,7 +23,7 @@ module.exports = async function createUser(socket, {message, type, token}) {
         return;
     }
 
-    const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin']);
+    const hasRequiredRoles = await checkUserRoles(token.id);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',

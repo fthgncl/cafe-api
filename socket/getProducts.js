@@ -4,7 +4,7 @@ const {checkUserRoles} = require("../helper/permissionManager");
 
 async function getProducts(socket, { message, type, token }) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin', 'order_entry']);
+        const hasRequiredRoles = await checkUserRoles(token.id, ['order_entry']);
 
         if (!hasRequiredRoles) {
             sendSocketMessage(socket, type, {

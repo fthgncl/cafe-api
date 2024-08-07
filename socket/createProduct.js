@@ -6,7 +6,7 @@ require('../helper/stringTurkish');
 
 module.exports = async function createProduct(socket, { message, type, token }) {
 
-    const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin','admin']);
+    const hasRequiredRoles = await checkUserRoles(token.id, ['admin']);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',
