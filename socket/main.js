@@ -9,6 +9,7 @@ const login = require('./login');
 const createUser = require('./createUser');
 const createProduct = require('./createProduct');
 const getProducts = require('./getProducts');
+const orderEntry = require('./orderEntry');
 
 setWebSocketServer(wss);
 
@@ -62,6 +63,10 @@ wss.on('connection', (ws) => {
 
                 case 'getProducts':
                     getProducts(ws, dataJSON);
+                    break;
+
+                case 'orderEntry':
+                    orderEntry(ws, dataJSON);
                     break;
 
                 default:
