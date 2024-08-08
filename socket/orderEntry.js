@@ -22,6 +22,7 @@ async function orderEntry(socket, {message, type, token}) {
             if (saveResult.data)
                 delete saveResult.data;
 
+            console.log('Bir sipariş alındı.');
             sendSocketMessage(socket, type, saveResult);
         }
 
@@ -36,6 +37,8 @@ async function orderEntry(socket, {message, type, token}) {
 }
 
 async function processMessage(message, token) {
+    // TODO: Gerekli alanlar gönderilmediği durumlarda vs. burada kontrol sağla, veya kullanabiliyorsan doğrudan kayıt esnasında oluşan hata üzerinden kullan.
+    // TODO: Burada sipariş tutarlarını sen hesapla. İstek olarak gönderilen tutara güvenme !
     return {...message, user: new mongoose.Types.ObjectId(token.id)};
 }
 
