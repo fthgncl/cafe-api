@@ -1,4 +1,4 @@
-const GetProducts = require('../database/models/Products');
+const Products = require('../database/models/Products');
 const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
@@ -14,7 +14,7 @@ async function getProducts(socket, { message, type, token }) {
             return;
         }
 
-        const products = await GetProducts.find();
+        const products = await Products.find();
         sendSocketMessage(socket, type, {
             status : 'success',
             message : 'Ürün listesi başarıyla alındı.',
