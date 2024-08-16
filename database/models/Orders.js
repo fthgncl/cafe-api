@@ -46,6 +46,12 @@ const OrderSchema = new Schema({
         required: true,
         min: [0, '`{PATH}` alanı ({VALUE}) negatif olamaz']
     },
+    kitchenStatus: {
+        type: String,
+        enum: ['Beklemede', 'Hazırlanıyor', 'Hazırlandı', 'İptal Edildi'],
+        default: 'Beklemede',
+        required: true
+    },
     createdDate: {
         type: Date,
         default: Date.now
