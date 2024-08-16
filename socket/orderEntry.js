@@ -39,18 +39,31 @@ async function orderEntry(socket, {message, type, token}) {
 
 async function processMessage(message, token) {
 
-    // TODO: Gerekli alanlar gönderilmediği durumlarda vs. burada kontrol sağla, veya kullanabiliyorsan doğrudan kayıt esnasında oluşan hata üzerinden kullan.
+    const {orders, paymentStatus, discount} = message;
+    if (
+        !Array.isArray(orders) ||
+        !orders.length ||
+        typeof paymentStatus !== 'string' ||
+        !paymentStatus.trim() ||
+        typeof discount !== 'number'
+    ) {
+        return {
+            status: 'error',
+            message: 'Geçersiz veya eksik parametreler var. [orders, paymentStatus,discount]'
+        };
+    }
 
-    const orderPriceResult = await calculateOrderPrice(message.orders);
+
+    const orderPriceResult = await calculateOrderPrice(orders);
     if (orderPriceResult.status === 'error') {
         return orderPriceResult;
     }
 
     return {
         ...message,
-        totalPrice :    orderPriceResult.totalPrice,
-        discountedPrice: orderPriceResult.totalPrice * message.discount / 100,
-        user:           new mongoose.Types.ObjectId(token.id)
+        totalPrice: orderPriceResult.totalPrice,
+        discountedPrice: orderPriceResult.totalPrice - orderPriceResult.totalPrice * discount / 100,
+        user: new mongoose.Types.ObjectId(token.id)
     };
 }
 
