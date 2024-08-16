@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Orders = require('../database/models/Orders');
+const Products = require('../database/models/Products');
 const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
@@ -37,9 +38,20 @@ async function orderEntry(socket, {message, type, token}) {
 }
 
 async function processMessage(message, token) {
+
     // TODO: Gerekli alanlar gönderilmediği durumlarda vs. burada kontrol sağla, veya kullanabiliyorsan doğrudan kayıt esnasında oluşan hata üzerinden kullan.
-    // TODO: Burada sipariş tutarlarını sen hesapla. İstek olarak gönderilen tutara güvenme !
-    return {...message, user: new mongoose.Types.ObjectId(token.id)};
+
+    const orderPriceResult = await calculateOrderPrice(message.orders);
+    if (orderPriceResult.status === 'error') {
+        return orderPriceResult;
+    }
+
+    return {
+        ...message,
+        totalPrice :    orderPriceResult.totalPrice,
+        discountedPrice: orderPriceResult.totalPrice * message.discount / 100,
+        user:           new mongoose.Types.ObjectId(token.id)
+    };
 }
 
 async function orderEntryPermissionsControl(token, message) {
@@ -95,5 +107,85 @@ async function saveOrders(processedMessage) {
         };
     }
 }
+
+async function calculateOrderPrice(orders) {
+    try {
+        if (!Array.isArray(orders)) {
+            return {
+                status: 'error',
+                message: 'Geçersiz istek: Siparişler bir dizi (array) olmalıdır.'
+            };
+        }
+
+        let totalPrice = 0;
+        for (const order of orders) {
+            if (typeof order !== 'object' || order === null) {
+                return {
+                    status: 'error',
+                    message: 'Geçersiz istek: Her sipariş bir nesne (object) olmalıdır.'
+                };
+            }
+
+            if (!order.product || !order.product._id) {
+                return {
+                    status: 'error',
+                    message: 'Geçersiz istek: Her siparişin product._id alanı olmalıdır.'
+                };
+
+            }
+
+            try {
+                const product = await Products.findById(order.product._id);
+                if (!product) {
+                    return {
+                        status: 'error',
+                        message: `Ürün bulunamadı: ID ${order.product._id}`
+                    };
+                }
+
+                const selectedSize = order.size;
+                const selectedContent = order.content;
+                const quantity = order.quantity;
+
+
+                if (!product || !product.sizes || quantity <= 0) return 0;
+
+                // Boyut fiyatını bul
+                const size = product.sizes.find(size => size.size === selectedSize);
+                if (!size) return 0;
+
+                // İçerik ek ücreti
+                const content = product.contents.find(content => content.name === selectedContent);
+                const contentFee = content ? content.extraFee : 0;
+
+                // Toplam fiyat hesapla
+                totalPrice += (size.price + contentFee) * quantity;
+
+            } catch (dbError) {
+                return {
+                    status: 'error',
+                    message: 'Veritabanı hatası: Ürün bilgileri alınırken bir hata oluştu.',
+                    error: dbError
+                };
+            }
+
+        }
+
+
+        return {
+            status: 'success',
+            orders,
+            totalPrice
+        };
+
+    } catch (error) {
+        return {
+            status: 'error',
+            message: 'Sipariş fiyatı hesaplanırken bir hata oluştu.',
+            error
+        };
+    }
+}
+
 
 module.exports = orderEntry;
