@@ -25,6 +25,10 @@ const OrderSchema = new Schema({
         type: String,
         default: ''
     },
+    customerName: {
+        type: String,
+        required: true
+    },
     paymentStatus: {
         type: String,
         enum: ['Ödendi', 'Daha Sonra Ödenecek', 'Hediye', 'İptal Edildi'],
