@@ -1,4 +1,5 @@
 const Orders = require('../database/models/Orders');
+const Users = require('../database/models/Users');
 const {sendSocketMessage} = require("../helper/socket");
 
 async function getOrders(socket, {message, type, token}) {
@@ -14,10 +15,18 @@ async function getOrders(socket, {message, type, token}) {
         });
 
         // Sonuçları birleştir
-        const orders = {
+        let orders = [
             ...pendingOrders,
             ...recentOrders
-        };
+        ];
+
+        orders = await Promise.all(orders.map(async order => {
+            const createdUser = await Users.findById(order.user);
+            return {
+                ...order._doc, // Order verilerini düzenli şekilde almak için
+                createdBy : `${createdUser.firstname} ${createdUser.lastname}`
+            };
+        }));
 
         sendSocketMessage(socket, type, {
             status: 'success',
