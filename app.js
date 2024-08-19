@@ -1,7 +1,11 @@
 // Connect Data Base
 require('./database/database')()
-    .then(result => console.log(result.message))
-    .catch(error => console.log(error.message))
+    .then(result => {
+        console.log(result.message);
 
-// Start Web Socket
-require('./socket/main');
+        // Eğer bağlantı başarılıysa socket'i çalıştır
+        if (result.connection) {
+            require('./socket/main');
+        }
+    })
+    .catch(error => console.error(error.message));
