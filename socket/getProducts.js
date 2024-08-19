@@ -2,9 +2,9 @@ const Products = require('../database/models/Products');
 const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
-async function getProducts(socket, { message, type, token }) {
+async function getProducts(socket, { type, token }) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['order_entry']);
+        const hasRequiredRoles = await checkUserRoles(token.id, ['order_entry','payment_processing']);
 
         if (!hasRequiredRoles) {
             sendSocketMessage(socket, type, {
@@ -27,7 +27,6 @@ async function getProducts(socket, { message, type, token }) {
             status: 'error',
             message: 'Veri tabanından ürünler alınamadı.'
         });
-        throw error; // Hata yönetimi açısından bu hatayı yükseltmek isteyebilirsiniz.
     }
 }
 
