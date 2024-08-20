@@ -1,23 +1,16 @@
-const {name, host, port} = require('../config.json').database;
+const { name, host, port } = require('../config.json').database;
 const mongoose = require('mongoose');
 
-module.exports = () => {
-    return new Promise((resolve, reject) => {
-        mongoose.connect(`${host}:${port}/${name}`);
-
-        mongoose.connection.on('open', () => {
-            resolve({
-                connection: true,
-                message: 'Database connection successful.'
-            });
-        });
-
-        mongoose.connection.on('error', (error) => {
-            reject({
-                connection: false,
-                message: 'Database connection failed.',
-                error
-            });
-        });
-    });
+module.exports = async () => {
+    try {
+        await mongoose.connect(`${host}:${port}/${name}`);
+        console.log('Veritabanı bağlantısı sağlandı.')
+        return { connection: true, message: 'Veritabanı bağlantısı sağlandı.' };
+    } catch (error) {
+        return {
+            connection: false,
+            message: 'Veritabanı bağlantısı kurulamadı',
+            error
+        };
+    }
 };
