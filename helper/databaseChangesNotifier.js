@@ -1,11 +1,5 @@
-const WebSocket = require('ws');
+const { sendMessageToAllClients } = require('./socket');
 const GetProducts = require("../database/models/Products");
-
-let wss
-
-function setWebSocketServer(server){
-    wss = server;
-}
 
 async function handleChangeProducts() {
     const messageType = 'getProducts';
@@ -23,13 +17,4 @@ async function handleChangeProducts() {
     }
 }
 
-function sendMessageToAllClients(messageType, message) {
-    const fullMessage = { type: messageType, message };
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(fullMessage));
-        }
-    });
-}
-
-module.exports = { setWebSocketServer , handleChangeProducts };
+module.exports = { handleChangeProducts };
