@@ -1,8 +1,9 @@
 const Orders = require('../database/models/Orders');
 const Users = require('../database/models/Users');
 const {sendSocketMessage} = require("../helper/socket");
+const {checkUserRoles} = require("../helper/permissionManager");
 
-async function getOrders(socket, {message, type, token}) {
+async function getOrders(socket, {type, token}) {
     try {
         // Beklemede olan siparişleri al
         const pendingOrders = await Orders.find({ kitchenStatus: 'Beklemede' });
@@ -20,14 +21,26 @@ async function getOrders(socket, {message, type, token}) {
             ...recentOrders
         ];
 
+        const hasPaymentProcessRole = await checkUserRoles(token.id, ['payment_processing']);
         orders = await Promise.all(orders.map(async order => {
-            const createdUser = await Users.findById(order.user);
+
+            const orderObject = order.toObject ? order.toObject() : order;
+
+            if (!hasPaymentProcessRole) {
+                delete orderObject.discount;
+                delete orderObject.discountedPrice;
+                delete orderObject.totalPrice;
+                delete orderObject.paymentStatus;
+            }
+
+            const createdUser = await Users.findById(orderObject.user);
             return {
-                ...order._doc, // Order verilerini düzenli şekilde almak için
-                createdBy : `${createdUser.firstname} ${createdUser.lastname}`
+                ...orderObject,
+                createdBy: `${createdUser.firstname} ${createdUser.lastname}`
             };
         }));
 
+        
         sendSocketMessage(socket, type, {
             status: 'success',
             message: 'Siparişler başarıyla listelendi',
