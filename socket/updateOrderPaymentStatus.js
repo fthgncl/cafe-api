@@ -1,5 +1,5 @@
 const Orders = require('../database/models/Orders');
-const {sendSocketMessage} = require("../helper/socket");
+const {sendSocketMessage,sendMessageToAllClients} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
 async function updateOrderPaymentStatus(socket, {message, type, token}) {
@@ -13,9 +13,9 @@ async function updateOrderPaymentStatus(socket, {message, type, token}) {
         Orders.findByIdAndUpdate(message.orderId, {paymentStatus:message.paymentStatus}, {new:true})
             .then(updatedOrder => {
                 if (updatedOrder) {
-                    sendSocketMessage(socket, type, {
+                    sendMessageToAllClients(type, {
                         status: 'success',
-                        message: 'Siparişin ödeme durumu başarıyla güncellendi.',
+                        message: 'Siparişin ödeme durumu güncellendi.',
                         updatedOrder : updatedOrder
                     });
                 } else {

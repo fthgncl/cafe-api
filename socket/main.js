@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const {port} = require('../config.json').socket;
 const wss = new WebSocket.Server({port});
-const {setWebSocketServer} = require("../helper/databaseChangesNotifier");
+const {setWebSocketServer} = require("../helper/socket");
 const {validateToken, getTokenData, updateToken} = require('../helper/token');
 const {sendSocketMessage} = require('../helper/socket');
 
