@@ -5,23 +5,43 @@ const {checkUserRoles} = require("../helper/permissionManager");
 
 async function getOrders(socket, {type, token}) {
     try {
-        // Beklemede olan siparişleri al
-        const pendingOrders = await Orders.find({ kitchenStatus: 'Beklemede' });
 
-        // Son 1 saatlik siparişleri al, "Beklemede" dışında
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-        const recentOrders = await Orders.find({
-            createdDate: { $gte: oneHourAgo },
-            kitchenStatus: { $ne: 'Beklemede' }  // "Beklemede" olmayanları seç
+        // 1. 'Beklemede' ve 'Hazırlanıyor' durumundaki siparişler, ödeme durumu 'İptal Edildi' olanları hariç tutun
+        const pendingAndPreparingOrders = await Orders.find({
+            kitchenStatus: { $in: ['Beklemede', 'Hazırlanıyor'] },
+            paymentStatus: { $ne: 'İptal Edildi' } // 'İptal Edildi' olan siparişleri hariç tut
+        });
+
+        // 2. 'Ödendi' ve 'Hazırlandı' olan siparişler, son 1 saat içinde güncellenmiş
+        const paidAndCompletedOrders = await Orders.find({
+            paymentStatus: 'Ödendi',
+            kitchenStatus: 'Hazırlandı',
+            updatedDate: { $gte: oneHourAgo }
+        });
+
+        // 3. 'İptal Edildi' olan siparişler, son 1 saat içinde oluşturulmuş
+        const cancelledOrders = await Orders.find({
+            paymentStatus: 'İptal Edildi',
+            createdDate: { $gte: oneHourAgo }
+        });
+
+        // 4. 'Daha Sonra Ödenecek' olan siparişler
+        const pendingPaymentOrders = await Orders.find({
+            paymentStatus: 'Daha Sonra Ödenecek'
         });
 
         // Sonuçları birleştir
         let orders = [
-            ...pendingOrders,
-            ...recentOrders
+            ...pendingAndPreparingOrders,
+            ...paidAndCompletedOrders,
+            ...cancelledOrders,
+            ...pendingPaymentOrders
         ];
 
+
         const hasPaymentProcessRole = await checkUserRoles(token.id, ['payment_processing']);
+        const hasorderHandlingRole = await checkUserRoles(token.id, ['order_handling']);
         orders = await Promise.all(orders.map(async order => {
 
             const orderObject = order.toObject ? order.toObject() : order;
@@ -31,6 +51,10 @@ async function getOrders(socket, {type, token}) {
                 delete orderObject.discountedPrice;
                 delete orderObject.totalPrice;
                 delete orderObject.paymentStatus;
+            }
+
+            if (!hasorderHandlingRole) {
+                delete orderObject.kitchenStatus;
             }
 
             const createdUser = await Users.findById(orderObject.user);
