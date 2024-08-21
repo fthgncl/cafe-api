@@ -52,7 +52,7 @@ const OrderSchema = new Schema({
     },
     kitchenStatus: {
         type: String,
-        enum: ['Beklemede', 'Hazırlanıyor', 'Hazırlandı', 'İptal Edildi'],
+        enum: ['Beklemede', 'Hazırlanıyor', 'Hazırlandı'],
         default: 'Beklemede',
         required: true
     },
