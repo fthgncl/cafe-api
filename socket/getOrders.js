@@ -1,50 +1,37 @@
 const Orders = require('../database/models/Orders');
 const Users = require('../database/models/Users');
-const {sendSocketMessage} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
+const { sendSocketMessage } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
 
-async function getOrders(socket, {type, token}) {
+async function getOrders(socket, { type, token }) {
     try {
-
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-        // 1. 'Beklemede' ve 'Hazırlanıyor' durumundaki siparişler, ödeme durumu 'İptal Edildi' olanları hariç tutun
-        const pendingAndPreparingOrders = await Orders.find({
-            kitchenStatus: { $in: ['Beklemede', 'Hazırlanıyor'] },
-            paymentStatus: { $ne: 'İptal Edildi' } // 'İptal Edildi' olan siparişleri hariç tut
+
+        // Veritabanı sorgusunu optimize et
+        const ordersQuery = Orders.find({
+            $or: [
+                { createdDate: { $gt: oneHourAgo } },
+                { paymentStatus: 'Daha Sonra Ödenecek' },
+                {
+                    paymentStatus: { $ne: 'İptal Edildi' },
+                    kitchenStatus: { $in: ['Beklemede', 'Hazırlanıyor'] }
+                }
+            ]
         });
 
-        // 2. 'Ödendi' ve 'Hazırlandı' olan siparişler, son 1 saat içinde güncellenmiş
-        const paidAndCompletedOrders = await Orders.find({
-            paymentStatus: 'Ödendi',
-            kitchenStatus: 'Hazırlandı',
-            updatedDate: { $gte: oneHourAgo }
-        });
+        const savedOrders = await ordersQuery;
 
-        // 3. 'İptal Edildi' olan siparişler, son 1 saat içinde oluşturulmuş
-        const cancelledOrders = await Orders.find({
-            paymentStatus: 'İptal Edildi',
-            createdDate: { $gte: oneHourAgo }
-        });
-
-        // 4. 'Daha Sonra Ödenecek' olan siparişler
-        const pendingPaymentOrders = await Orders.find({
-            paymentStatus: 'Daha Sonra Ödenecek'
-        });
-
-        // Sonuçları birleştir
-        let orders = [
-            ...pendingAndPreparingOrders,
-            ...paidAndCompletedOrders,
-            ...cancelledOrders,
-            ...pendingPaymentOrders
-        ];
-
+        // Kullanıcıları topluca al
+        const userIds = savedOrders.map(order => order.user);
+        const users = await Users.find({ _id: { $in: userIds } });
+        const userMap = new Map(users.map(user => [user._id.toString(), user]));
 
         const hasPaymentProcessRole = await checkUserRoles(token.id, ['payment_processing']);
-        const hasorderHandlingRole = await checkUserRoles(token.id, ['order_handling']);
-        orders = await Promise.all(orders.map(async order => {
+        const hasOrderHandlingRole = await checkUserRoles(token.id, ['order_handling']);
 
-            const orderObject = order.toObject ? order.toObject() : order;
+        // Siparişleri işleyin
+        const orders = savedOrders.map(order => {
+            const orderObject = order.toObject();
 
             if (!hasPaymentProcessRole) {
                 delete orderObject.discount;
@@ -53,18 +40,17 @@ async function getOrders(socket, {type, token}) {
                 delete orderObject.paymentStatus;
             }
 
-            if (!hasorderHandlingRole) {
+            if (!hasOrderHandlingRole) {
                 delete orderObject.kitchenStatus;
             }
 
-            const createdUser = await Users.findById(orderObject.user);
+            const createdUser = userMap.get(orderObject.user.toString());
             return {
                 ...orderObject,
-                createdBy: `${createdUser.firstname} ${createdUser.lastname}`
+                createdBy: createdUser ? `${createdUser.firstname} ${createdUser.lastname}` : 'Bilinmiyor'
             };
-        }));
+        });
 
-        
         sendSocketMessage(socket, type, {
             status: 'success',
             message: 'Siparişler başarıyla listelendi',
