@@ -20,13 +20,11 @@ async function updateOrderKitchenStatus(socket, {message, type, token}) {
                         status: 'error',
                         message: 'Sipariş iptal edilmiş. Güncelleme yapılamadı.'
                     });
-                    throw new Error('Sipariş iptal edildi, güncelleme yapılmadı.');
                 } else {
                     sendSocketMessage(socket, type, {
                         status: 'error',
                         message: 'Sipariş numarası veritabanıyla eşleşmedi.'
                     });
-                    throw new Error('Sipariş bulunamadı.');
                 }
             })
             .then(updatedOrder => {

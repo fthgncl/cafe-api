@@ -5,8 +5,8 @@ function setWebSocketServer(server){
     wss = server;
 }
 
-function sendSocketMessage(socket, type, message) {
-    socket.send(JSON.stringify({type, message}));
+async function sendSocketMessage(socket, type, message) {
+    return await socket.send(JSON.stringify({type, message}));
 }
 
 function sendMessageToAllClients(messageType, message) {

@@ -3,12 +3,13 @@ const Orders = require('../database/models/Orders');
 const Products = require('../database/models/Products');
 const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
+const { handleNewOrder } = require("../helper/databaseChangesNotifier");
 
 async function orderEntry(socket, {message, type, token}) {
     try {
         const permissionsControlResult = await orderEntryPermissionsControl(token, message);
         if (permissionsControlResult.status !== 'success') {
-            sendSocketMessage(socket, type, permissionsControlResult);
+            await sendSocketMessage(socket, type, permissionsControlResult);
             return;
         }
 
@@ -16,24 +17,21 @@ async function orderEntry(socket, {message, type, token}) {
 
         const saveResult = await saveOrders(processedMessage);
         if (saveResult.status === 'success') {
-            // TODO: Buraya sipariş girişi yapıldı handle koy. Yeni sipariş verileri saveResult.data keyinde yer almaktadır.
-            // TODO: yeni sipariş verilerini doğrudan push etme. ID kullanarak kayıtlı veriyi çek gönder.
-            // TODO: Çünkü SQL tarzında bir veri tabanı kullanmıyorsun. Kaydı gerçekten yapmış mı bilemeyiz !
+            const result = await handleNewOrder(saveResult.data.id);
 
             if (saveResult.data)
                 delete saveResult.data;
 
-            console.log('Bir sipariş alındı.');
-            sendSocketMessage(socket, type, saveResult);
+            await sendSocketMessage(socket, type, saveResult)
         }
 
     } catch (error) {
-        sendSocketMessage(socket, type, {
+        console.error('Sipariş işlemi sırasında hata: ', error);
+        await sendSocketMessage(socket, type, {
             status: 'error',
             message: 'Sipariş işlemi sırasında bir hata oluştu.',
             error: error.message
         });
-        console.error('Sipariş işlemi sırasında hata: ', error);
     }
 }
 
