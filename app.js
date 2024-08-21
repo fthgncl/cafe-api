@@ -1,4 +1,3 @@
-console.log('--- Cafe API ---');
 (async () => {
     try {
         const { connection, message } = await require('./database/database')();
