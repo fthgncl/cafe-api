@@ -11,34 +11,47 @@ async function updateOrderKitchenStatus(socket, {message, type, token}) {
             return;
         }
 
-        Orders.findByIdAndUpdate(message.orderId, {kitchenStatus:message.kitchenStatus}, {new:true})
-            .then(updatedOrder => {
-
-
-                if (updatedOrder) {
-                    sendMessageToAllClients(type, {
-                        status: 'success',
-                        message: 'Siparişin mutfak durumu güncellendi.',
-                        orderInfo : {
-                            id : updatedOrder.id,
-                            newKitchenStatus : updatedOrder.kitchenStatus
-                        }
+        Orders.findById(message.orderId)
+            .then(order => {
+                if (order && order.paymentStatus !== 'İptal Edildi') {
+                    return Orders.findByIdAndUpdate(message.orderId, { kitchenStatus: message.kitchenStatus }, { new: true });
+                } else if (order) {
+                    sendSocketMessage(socket, type, {
+                        status: 'error',
+                        message: 'Sipariş iptal edilmiş. Güncelleme yapılamadı.'
                     });
+                    throw new Error('Sipariş iptal edildi, güncelleme yapılmadı.');
                 } else {
                     sendSocketMessage(socket, type, {
                         status: 'error',
                         message: 'Sipariş numarası veritabanıyla eşleşmedi.'
                     });
+                    throw new Error('Sipariş bulunamadı.');
+                }
+            })
+            .then(updatedOrder => {
+                if (updatedOrder) {
+                    sendMessageToAllClients(type, {
+                        status: 'success',
+                        message: 'Siparişin mutfak durumu güncellendi.',
+                        orderInfo: {
+                            id: updatedOrder.id,
+                            newKitchenStatus: updatedOrder.kitchenStatus
+                        }
+                    });
                 }
             })
             .catch(error => {
-                sendSocketMessage(socket, type, {
-                    status: 'error',
-                    message: 'Sipariş güncellenirken veritabanında hata oluştu.',
-                    error: error.message
-                });
+                if (error.message !== 'Sipariş iptal edildi, güncelleme yapılmadı.' && error.message !== 'Sipariş bulunamadı.') {
+                    sendSocketMessage(socket, type, {
+                        status: 'error',
+                        message: 'Sipariş güncellenirken veritabanında hata oluştu.',
+                        error: error.message
+                    });
+                }
                 console.error('Güncelleme sırasında bir hata oluştu:', error);
             });
+
 
     } catch (error) {
         sendSocketMessage(socket, type, {
