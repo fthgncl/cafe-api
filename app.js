@@ -1,10 +1,12 @@
+console.log('--- Cafe API ---');
 (async () => {
     try {
-        const { connection } = await require('./database/database')();
+        const { connection, message } = await require('./database/database')();
+        console.log(message);
         if (connection) {
             require('./socket/main');
         }
     } catch (error) {
-        console.error(error.message);
+        console.log(error.message);
     }
 })();
