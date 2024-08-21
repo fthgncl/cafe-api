@@ -1,6 +1,7 @@
 const {sendMessageToAllClients} = require('./socket');
 const GetProducts = require("../database/models/Products");
 const Orders = require("../database/models/Orders");
+const Users = require("../database/models/Users");
 
 async function handleChangeProducts() {
     const messageType = 'getProducts';
@@ -22,6 +23,8 @@ async function handleNewOrder(orderId) {
     const messageType = 'newOrder';
     try {
         const newOrder = await Orders.findById(orderId);
+        const createdUser = await Users.findById(newOrder.user)
+        newOrder._doc.createdBy = createdUser ? `${createdUser.firstname} ${createdUser.lastname}` : 'Bilinmiyor'
         const result = {
             status: 'success',
             message: 'Yeni sipariş alındı.',

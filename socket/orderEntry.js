@@ -17,7 +17,7 @@ async function orderEntry(socket, {message, type, token}) {
 
         const saveResult = await saveOrders(processedMessage);
         if (saveResult.status === 'success') {
-            const result = await handleNewOrder(saveResult.data.id);
+            await handleNewOrder(saveResult.data.id);
 
             if (saveResult.data)
                 delete saveResult.data;
