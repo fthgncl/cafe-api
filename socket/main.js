@@ -14,6 +14,7 @@ const getUsers = require('./getUsers');
 const orderEntry = require('./orderEntry');
 const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
+const deleteUser = require('./deleteUser');
 
 setWebSocketServer(wss);
 
@@ -87,6 +88,10 @@ wss.on('connection', (ws) => {
 
                 case 'updateOrderKitchenStatus':
                     updateOrderKitchenStatus(ws, dataJSON);
+                    break;
+
+                case 'deleteUser':
+                    deleteUser(ws, dataJSON);
                     break;
 
                 default:
