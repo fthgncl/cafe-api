@@ -29,7 +29,8 @@ async function deleteUser(socket, {message, type, token}) {
                 } else {
                     sendMessageToAllClients(type, {
                         status: 'success',
-                        message: 'Kullanıcı silindi'
+                        message: 'Kullanıcı silindi',
+                        deletedUserId: message.userId
                     });
                 }
             })
