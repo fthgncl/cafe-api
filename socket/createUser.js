@@ -3,7 +3,8 @@ const bcrypt = require('bcryptjs');
 const { checkUserRoles } = require('../helper/permissionManager');
 require('../helper/stringTurkish');
 
-const { sendSocketMessage } = require('../helper/socket');
+const { sendSocketMessage , sendMessageToAllClients } = require('../helper/socket');
+const Users = require("../database/models/Users");
 
 module.exports = async function createUser(socket, {message, type, token}) {
 
@@ -50,11 +51,22 @@ module.exports = async function createUser(socket, {message, type, token}) {
 
     user.save()
         .then(saveData => {
-            sendSocketMessage(socket,type,{
-                status: 'success',
-                message: `${user.firstname} ${user.lastname} yeni kullanıcı olarak eklendi`,
-                data: saveData
-            })
+            Users.findById(saveData.id).select('-password')
+                .then(user => {
+                    sendMessageToAllClients(type,{
+                        status: 'success',
+                        message: `${user.firstname} ${user.lastname} yeni kullanıcı olarak eklendi`,
+                        data: user
+                    })
+                })
+                .catch(error => {
+                    sendSocketMessage(socket,type,{
+                        status: 'error',
+                        message: 'Kullanıcı kaydı yapıldı ancak veri tabanında bulunamadı.',
+                        error
+                    })
+                })
+
         })
         .catch(error => {
             sendSocketMessage(socket,type,{
