@@ -10,6 +10,7 @@ const createUser = require('./createUser');
 const createProduct = require('./createProduct');
 const getProducts = require('./getProducts');
 const getOrders = require('./getOrders');
+const getUsers = require('./getUsers');
 const orderEntry = require('./orderEntry');
 const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
@@ -74,6 +75,10 @@ wss.on('connection', (ws) => {
 
                 case 'getOrders':
                     getOrders(ws, dataJSON);
+                    break;
+
+                case 'getUsers':
+                    getUsers(ws, dataJSON);
                     break;
 
                 case 'updateOrderPaymentStatus':
