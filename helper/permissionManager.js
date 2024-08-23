@@ -54,7 +54,7 @@ function readUserPermissions(userId) {
             }).catch(error => {
             reject({
                 status: 404,
-                message: 'Kullanıcı bilgileriniz veri tabanında bulunamadı',
+                message: `Kullanıcı bilgileri veri tabanında bulunamadı (userId:${userId})`, // TODO: kullanıcı veritabanında bulunamazsa oturumunu kapattır. Yeniden giriş yapsın.
                 error
             });
         });
@@ -92,7 +92,7 @@ async function checkUserRoles(userId, roles = ['sys_admin'], fullMatch = false) 
             return roles.some(role => userRoles.includes(role));    // roles array'ında bulunan her hangi bir index userRoles array'ında da bulunuyorsa true döner
 
     } catch (error) {
-        throw new Error(error);
+        console.error(error);
     }
 }
 
