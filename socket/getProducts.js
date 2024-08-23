@@ -7,7 +7,7 @@ async function getProducts(socket, { type, token }) {
         const hasRequiredRoles = await checkUserRoles(token.id, ['order_entry','payment_processing']);
 
         if (!hasRequiredRoles) {
-            sendSocketMessage(socket, type, {
+            await sendSocketMessage(socket, type, {
                 status: 'error',
                 message: 'Bu işlemi gerçekleştirmek için yeterli yetkiniz bulunmuyor.'
             });
@@ -15,9 +15,9 @@ async function getProducts(socket, { type, token }) {
         }
 
         const products = await Products.find();
-        sendSocketMessage(socket, type, {
-            status : 'success',
-            message : 'Ürün listesi başarıyla alındı.',
+        await sendSocketMessage(socket, type, {
+            status: 'success',
+            message: 'Ürün listesi başarıyla alındı.',
             products
         });
         return products;
