@@ -31,8 +31,8 @@ module.exports = async function createProduct(socket, { message, type, tokenData
     }
 
     product.save()
-        .then(saveData => {
-            sendSocketMessage(socket, type, {
+        .then(async saveData => {
+            await sendSocketMessage(socket, type, {
                 status: 'success',
                 message: `${product.productname} ürün listesine eklenmiştir.`,
                 data: saveData

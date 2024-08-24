@@ -69,24 +69,18 @@ wss.on('connection', (ws) => {
             sendSocketMessage(ws, payload.type, {error: 'Invalid or expired token'});
         } else {
             switch (payload.type) {
+
+                // USER PROCESS
                 case 'createUser':
                     createUser(ws, payload);
                     break;
 
-                case 'createProduct':
-                    createProduct(ws, payload);
+                case 'deleteUser':
+                    deleteUser(ws, payload);
                     break;
 
-                case 'getProducts':
-                    getProducts(ws, payload);
-                    break;
-
-                case 'orderEntry':
-                    orderEntry(ws, payload);
-                    break;
-
-                case 'getOrders':
-                    getOrders(ws, payload);
+                case 'updateUser':
+                    updateUser(ws, payload);
                     break;
 
                 case 'getUsers':
@@ -97,16 +91,36 @@ wss.on('connection', (ws) => {
                     getUser(ws, payload);
                     break;
 
-                case 'getProduct':
-                    getProduct(ws, payload);
+
+                // PRODUCT PROCESS
+                case 'createProduct':
+                    createProduct(ws, payload);
                     break;
 
-                case 'updateUser':
-                    updateUser(ws, payload);
+                case 'deleteProduct':
+                    deleteProduct(ws, payload);
                     break;
 
                 case 'updateProduct':
                     updateProduct(ws, payload);
+                    break;
+
+                case 'getProducts':
+                    getProducts(ws, payload);
+                    break;
+
+                case 'getProduct':
+                    getProduct(ws, payload);
+                    break;
+
+
+                // ORDER PROCESS
+                case 'orderEntry':
+                    orderEntry(ws, payload);
+                    break;
+
+                case 'getOrders':
+                    getOrders(ws, payload);
                     break;
 
                 case 'updateOrderPaymentStatus':
@@ -117,13 +131,6 @@ wss.on('connection', (ws) => {
                     updateOrderKitchenStatus(ws, payload);
                     break;
 
-                case 'deleteUser':
-                    deleteUser(ws, payload);
-                    break;
-
-                case 'deleteProduct':
-                    deleteProduct(ws, payload);
-                    break;
 
                 default:
                     console.error('Unknown message type:', payload.type);
