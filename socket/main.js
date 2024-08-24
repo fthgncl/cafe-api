@@ -12,8 +12,11 @@ const getProducts = require('./getProducts');
 const getOrders = require('./getOrders');
 const getUsers = require('./getUsers');
 const getUser = require('./getUser');
+const getProduct = require('./getProduct');
 const deleteUser = require('./deleteUser');
+const deleteProduct = require('./deleteProduct');
 const updateUser = require('./updateUser');
+const updateProduct = require('./updateProduct');
 const orderEntry = require('./orderEntry');
 const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
@@ -88,8 +91,16 @@ wss.on('connection', (ws) => {
                     getUser(ws, dataJSON);
                     break;
 
+                case 'getProduct':
+                    getProduct(ws, dataJSON);
+                    break;
+
                 case 'updateUser':
                     updateUser(ws, dataJSON);
+                    break;
+
+                case 'updateProduct':
+                    updateProduct(ws, dataJSON);
                     break;
 
                 case 'updateOrderPaymentStatus':
@@ -102,6 +113,10 @@ wss.on('connection', (ws) => {
 
                 case 'deleteUser':
                     deleteUser(ws, dataJSON);
+                    break;
+
+                case 'deleteProduct':
+                    deleteProduct(ws, dataJSON);
                     break;
 
                 default:
