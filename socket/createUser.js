@@ -6,9 +6,9 @@ require('../helper/stringTurkish');
 const { sendSocketMessage , sendMessageToAllClients } = require('../helper/socket');
 const Users = require("../database/models/Users");
 
-module.exports = async function createUser(socket, {message, type, token}) {
+module.exports = async function createUser(socket, {message, type, tokenData}) {
 
-    const hasRequiredRoles = await checkUserRoles(token.id);
+    const hasRequiredRoles = await checkUserRoles(tokenData.id);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',

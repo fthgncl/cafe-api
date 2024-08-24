@@ -2,8 +2,12 @@ const { encryptData, decryptData} = require("./crypto");
 const {sendSocketMessage} = require("./socket");
 const { tokenLifeTimeMinute } = require('../config.json');
 
-function validateToken(tokenData) {
+function validateToken({token,tokenData}) {
+
     try {
+        if ( !token )
+            return false;
+
         return 'exp' in tokenData && typeof tokenData.exp === 'number' && Date.now() < tokenData.exp;
     } catch (error) {
         console.error('Token validation failed:', error);
@@ -20,12 +24,13 @@ function getTokenData(token){
     }
 }
 
-function updateToken(socket,tokenData){
+function updateToken(socket, {token , tokenData}){
     const exp = tokenLifeTimeMinute * 60000 + Date.now();
     const newTokenData = { ...tokenData, exp }
     const newToken = encryptData(JSON.stringify(newTokenData))
     const newUserProps = {
         token : newToken,
+        oldToken : token,
         exp
     }
     sendSocketMessage(socket, 'updateToken', newUserProps);

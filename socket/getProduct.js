@@ -2,9 +2,9 @@ const Products = require('../database/models/Products');
 const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
-async function getProduct(socket, { message, type, token }) {
+async function getProduct(socket, { message, type, tokenData }) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['admin']);
+        const hasRequiredRoles = await checkUserRoles(tokenData.id, ['admin']);
 
         if (!hasRequiredRoles) {
             await sendSocketMessage(socket, type, {

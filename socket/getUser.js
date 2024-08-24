@@ -2,9 +2,9 @@ const Users = require('../database/models/Users');
 const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
-async function getUser(socket, { message, type, token }) {
+async function getUser(socket, { message, type, tokenData }) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin']);
+        const hasRequiredRoles = await checkUserRoles(tokenData.id, ['sys_admin']);
 
         if (!hasRequiredRoles) {
             await sendSocketMessage(socket, type, {

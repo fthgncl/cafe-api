@@ -2,9 +2,9 @@ const Products = require('../database/models/Products');
 const {checkUserRoles} = require('../helper/permissionManager');
 const {sendSocketMessage, sendMessageToAllClients} = require('../helper/socket');
 
-module.exports = async function updateProduct(socket, {message, type, token}) {
+module.exports = async function updateProduct(socket, {message, type, tokenData}) {
 
-    const hasRequiredRoles = await checkUserRoles(token.id,['admin']);
+    const hasRequiredRoles = await checkUserRoles(tokenData.id,['admin']);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',

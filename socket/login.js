@@ -6,7 +6,7 @@ const { encryptData } = require('../helper/crypto');
 
 module.exports = function login(socket, data) {
     const { username, password } = data.message;
-    const messageType = 'login';
+    const messageType = data.type;
 
     if (!username || !password) {
         sendSocketMessage(socket, messageType, {

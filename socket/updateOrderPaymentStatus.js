@@ -2,9 +2,9 @@ const Orders = require('../database/models/Orders');
 const {sendSocketMessage,sendMessageToAllClients} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
-async function updateOrderPaymentStatus(socket, {message, type, token}) {
+async function updateOrderPaymentStatus(socket, {message, type, tokenData}) {
     try {
-        const permissionsControlResult = await updateOrderPaymentStatusPermissionsControl(token);
+        const permissionsControlResult = await updateOrderPaymentStatusPermissionsControl(tokenData);
         if (permissionsControlResult.status !== 'success') {
             sendSocketMessage(socket, type, permissionsControlResult);
             return;
@@ -44,9 +44,9 @@ async function updateOrderPaymentStatus(socket, {message, type, token}) {
     }
 }
 
-async function updateOrderPaymentStatusPermissionsControl(token) {
+async function updateOrderPaymentStatusPermissionsControl(tokenData) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['payment_processing']);
+        const hasRequiredRoles = await checkUserRoles(tokenData.id, ['payment_processing']);
         if (!hasRequiredRoles) {
             return {
                 status: 'error',

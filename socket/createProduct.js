@@ -4,9 +4,9 @@ const {sendSocketMessage} = require('../helper/socket');
 const {handleChangeProducts} = require("../helper/databaseChangesNotifier");
 require('../helper/stringTurkish');
 
-module.exports = async function createProduct(socket, { message, type, token }) {
+module.exports = async function createProduct(socket, { message, type, tokenData, token }) {
 
-    const hasRequiredRoles = await checkUserRoles(token.id, ['admin']);
+    const hasRequiredRoles = await checkUserRoles(tokenData.id, ['admin']);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',
@@ -37,7 +37,7 @@ module.exports = async function createProduct(socket, { message, type, token }) 
                 message: `${product.productname} ürün listesine eklenmiştir.`,
                 data: saveData
             });
-            handleChangeProducts();
+            handleChangeProducts(saveData.id,token);
         })
         .catch(error => {
             sendSocketMessage(socket, type, {

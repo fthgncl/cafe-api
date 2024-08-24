@@ -3,7 +3,7 @@ const Users = require('../database/models/Users');
 const { sendSocketMessage } = require("../helper/socket");
 const { checkUserRoles } = require("../helper/permissionManager");
 
-async function getOrders(socket, { type, token }) {
+async function getOrders(socket, { type, tokenData }) {
     try {
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
@@ -26,8 +26,8 @@ async function getOrders(socket, { type, token }) {
         const users = await Users.find({ _id: { $in: userIds } });
         const userMap = new Map(users.map(user => [user._id.toString(), user]));
 
-        const hasPaymentProcessRole = await checkUserRoles(token.id, ['payment_processing']);
-        const hasOrderHandlingRole = await checkUserRoles(token.id, ['order_handling']);
+        const hasPaymentProcessRole = await checkUserRoles(tokenData.id, ['payment_processing']);
+        const hasOrderHandlingRole = await checkUserRoles(tokenData.id, ['order_handling']);
 
         // Siparişleri işleyin
         const orders = savedOrders.map(order => {

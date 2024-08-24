@@ -2,9 +2,9 @@ const Products = require('../database/models/Products');
 const {sendSocketMessage, sendMessageToAllClients} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
-async function deleteProduct(socket, {message, type, token}) {
+async function deleteProduct(socket, {message, type, tokenData}) {
     try {
-        const permissionsControlResult = await deleteProductPermissionsControl(token);
+        const permissionsControlResult = await deleteProductPermissionsControl(tokenData);
 
         if (permissionsControlResult.status !== 'success') {
             sendSocketMessage(socket, type, permissionsControlResult);
@@ -48,9 +48,9 @@ async function deleteProduct(socket, {message, type, token}) {
     }
 }
 
-async function deleteProductPermissionsControl(token) {
+async function deleteProductPermissionsControl(tokenData) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['admin']);
+        const hasRequiredRoles = await checkUserRoles(tokenData.id, ['admin']);
         if (!hasRequiredRoles) {
             return {
                 status: 'error',

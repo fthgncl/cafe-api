@@ -5,15 +5,15 @@ const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 const { handleNewOrder } = require("../helper/databaseChangesNotifier");
 
-async function orderEntry(socket, {message, type, token}) {
+async function orderEntry(socket, {message, type, tokenData}) {
     try {
-        const permissionsControlResult = await orderEntryPermissionsControl(token, message);
+        const permissionsControlResult = await orderEntryPermissionsControl(tokenData, message);
         if (permissionsControlResult.status !== 'success') {
             await sendSocketMessage(socket, type, permissionsControlResult);
             return;
         }
 
-        const processedMessage = await processMessage(message, token);
+        const processedMessage = await processMessage(message, tokenData);
 
         const saveResult = await saveOrders(processedMessage);
         if (saveResult.status === 'success') {
@@ -35,7 +35,7 @@ async function orderEntry(socket, {message, type, token}) {
     }
 }
 
-async function processMessage(message, token) {
+async function processMessage(message, tokenData) {
 
     const {orders, paymentStatus, discount} = message;
     if (
@@ -61,13 +61,13 @@ async function processMessage(message, token) {
         ...message,
         totalPrice: orderPriceResult.totalPrice,
         discountedPrice: orderPriceResult.totalPrice - orderPriceResult.totalPrice * discount / 100,
-        user: new mongoose.Types.ObjectId(token.id)
+        user: new mongoose.Types.ObjectId(tokenData.id)
     };
 }
 
-async function orderEntryPermissionsControl(token, message) {
+async function orderEntryPermissionsControl(tokenData, message) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['order_entry']);
+        const hasRequiredRoles = await checkUserRoles(tokenData.id, ['order_entry']);
         if (!hasRequiredRoles) {
             return {
                 status: 'error',
@@ -78,7 +78,7 @@ async function orderEntryPermissionsControl(token, message) {
         const {discount} = message;
 
         if (discount && discount !== 0) {
-            const hasDiscountPermission = await checkUserRoles(token.id, ['discount_application']);
+            const hasDiscountPermission = await checkUserRoles(tokenData.id, ['discount_application']);
             if (!hasDiscountPermission) {
                 return {
                     status: 'error',

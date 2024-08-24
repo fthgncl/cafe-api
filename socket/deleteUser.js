@@ -2,16 +2,16 @@ const Users = require('../database/models/Users');
 const {sendSocketMessage, sendMessageToAllClients} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
-async function deleteUser(socket, {message, type, token}) {
+async function deleteUser(socket, {message, type, tokenData}) {
     try {
-        const permissionsControlResult = await deleteUserPermissionsControl(token);
+        const permissionsControlResult = await deleteUserPermissionsControl(tokenData);
 
         if (permissionsControlResult.status !== 'success') {
             sendSocketMessage(socket, type, permissionsControlResult);
             return;
         }
 
-        if (token.id === message.userId) {
+        if (tokenData.id === message.userId) {
             sendSocketMessage(socket, type, {
                 status: 'error',
                 message: 'Kendinize ait verileri silemezsiniz.'
@@ -54,9 +54,9 @@ async function deleteUser(socket, {message, type, token}) {
     }
 }
 
-async function deleteUserPermissionsControl(token) {
+async function deleteUserPermissionsControl(tokenData) {
     try {
-        const hasRequiredRoles = await checkUserRoles(token.id, ['sys_admin']);
+        const hasRequiredRoles = await checkUserRoles(tokenData.id, ['sys_admin']);
         if (!hasRequiredRoles) {
             return {
                 status: 'error',

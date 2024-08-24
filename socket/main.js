@@ -43,84 +43,90 @@ wss.on('connection', (ws) => {
             return;
         }
 
-        const tokenData = getTokenData(dataJSON.token);
-        const tokenIsActive = validateToken(tokenData);
 
-        dataJSON.token = tokenData;
-
-        if (tokenIsActive) {
-           updateToken(ws, tokenData);
+        const payload = {
+            ...dataJSON,
+            tokenData : getTokenData(dataJSON.token)
         }
 
+        const tokenIsActive = validateToken(payload);
 
-        if (dataJSON.type === 'login') {
+        if (tokenIsActive) {
+           updateToken(ws, payload);
+        }
+
+        console.log('_______________________________');
+        console.log('payload : ',payload);
+        console.log('_______________________________');
+
+        if (payload.type === 'login') {
             if (!tokenIsActive) {
-                login(ws, dataJSON);
+                login(ws, payload);
             } else {
                 sendSocketMessage(ws, 'login', {error: 'Already logged in'});
             }
         } else if (!tokenIsActive) {
-            sendSocketMessage(ws, dataJSON.type, {error: 'Invalid or expired token'});
+            sendSocketMessage(ws, payload.type, {error: 'Invalid or expired token'});
         } else {
-            switch (dataJSON.type) {
+            switch (payload.type) {
                 case 'createUser':
-                    createUser(ws, dataJSON);
+                    createUser(ws, payload);
                     break;
 
                 case 'createProduct':
-                    createProduct(ws, dataJSON);
+                    createProduct(ws, payload);
                     break;
 
                 case 'getProducts':
-                    getProducts(ws, dataJSON);
+                    getProducts(ws, payload);
                     break;
 
                 case 'orderEntry':
-                    orderEntry(ws, dataJSON);
+                    orderEntry(ws, payload);
                     break;
 
                 case 'getOrders':
-                    getOrders(ws, dataJSON);
+                    getOrders(ws, payload);
                     break;
 
                 case 'getUsers':
-                    getUsers(ws, dataJSON);
+                    getUsers(ws, payload);
                     break;
 
                 case 'getUser':
-                    getUser(ws, dataJSON);
+                    getUser(ws, payload);
                     break;
 
                 case 'getProduct':
-                    getProduct(ws, dataJSON);
+                    getProduct(ws, payload);
                     break;
 
                 case 'updateUser':
-                    updateUser(ws, dataJSON);
+                    updateUser(ws, payload);
                     break;
 
                 case 'updateProduct':
-                    updateProduct(ws, dataJSON);
+                    updateProduct(ws, payload);
                     break;
 
                 case 'updateOrderPaymentStatus':
-                    updateOrderPaymentStatus(ws, dataJSON);
+                    updateOrderPaymentStatus(ws, payload);
                     break;
 
                 case 'updateOrderKitchenStatus':
-                    updateOrderKitchenStatus(ws, dataJSON);
+                    updateOrderKitchenStatus(ws, payload);
                     break;
 
                 case 'deleteUser':
-                    deleteUser(ws, dataJSON);
+                    deleteUser(ws, payload);
                     break;
 
                 case 'deleteProduct':
-                    deleteProduct(ws, dataJSON);
+                    deleteProduct(ws, payload);
                     break;
 
                 default:
-                    console.error('Unknown message type:', dataJSON.type);
+                    console.error('Unknown message type:', payload.type);
                     sendSocketMessage(ws, 'messageError', {error: 'Unknown message type'});
             }
         }

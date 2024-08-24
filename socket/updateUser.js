@@ -5,9 +5,9 @@ require('../helper/stringTurkish');
 
 const {sendSocketMessage, sendMessageToAllClients} = require('../helper/socket');
 
-module.exports = async function updateUser(socket, {message, type, token}) {
+module.exports = async function updateUser(socket, {message, type, tokenData}) {
 
-    const hasRequiredRoles = await checkUserRoles(token.id);
+    const hasRequiredRoles = await checkUserRoles(tokenData.id);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
             status: 'error',
@@ -16,7 +16,7 @@ module.exports = async function updateUser(socket, {message, type, token}) {
         return;
     }
 
-    if (token.id === message.userId) {
+    if (tokenData.id === message.userId) {
         sendSocketMessage(socket, type, {
             status: 'error',
             message: 'Kendinize ait verileri düzenleyemezsiniz.'

@@ -3,18 +3,19 @@ const GetProducts = require("../database/models/Products");
 const Orders = require("../database/models/Orders");
 const Users = require("../database/models/Users");
 
-async function handleChangeProducts() {
-    const messageType = 'getProducts';
+async function handleChangeProducts(productId,token) {
+    const messageType = 'newProduct';
     try {
-        const products = await GetProducts.find();
+        const product = await GetProducts.findById(productId);
         sendMessageToAllClients(messageType, {
             status: 'success',
-            message: 'Ürün listesi başarıyla alındı.',
-            products
+            message: 'Yeni ürün başarıyla eklendi.',
+            addedByToken: token,
+            product
         });
-        return products;
+        return product;
     } catch (error) {
-        console.error('Ürünler veri tabanından alınamadı:', error);
+        console.error('Yeni ürün veri tabanına eklenemedi:', error);
         throw error;
     }
 }
