@@ -8,22 +8,6 @@ const Users = require("../database/models/Users");
 
 module.exports = async function createUser(socket, {message, type, token}) {
 
-    if (!token) {
-        sendSocketMessage(socket, type, {
-            status: 'error',
-            message: 'Token parametresi gönderilmedi'
-        });
-        return;
-    }
-
-    if ( Date.now() > token.exp ) {
-        sendSocketMessage(socket, type, {
-            status: 'error',
-            message: 'Oturum zaman aşımına uğradı'
-        });
-        return;
-    }
-
     const hasRequiredRoles = await checkUserRoles(token.id);
     if (!hasRequiredRoles) {
         sendSocketMessage(socket, type, {
