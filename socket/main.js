@@ -11,10 +11,12 @@ const createProduct = require('./createProduct');
 const getProducts = require('./getProducts');
 const getOrders = require('./getOrders');
 const getUsers = require('./getUsers');
+const getUser = require('./getUser');
+const deleteUser = require('./deleteUser');
+const updateUser = require('./updateUser');
 const orderEntry = require('./orderEntry');
 const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
-const deleteUser = require('./deleteUser');
 
 setWebSocketServer(wss);
 
@@ -80,6 +82,14 @@ wss.on('connection', (ws) => {
 
                 case 'getUsers':
                     getUsers(ws, dataJSON);
+                    break;
+
+                case 'getUser':
+                    getUser(ws, dataJSON);
+                    break;
+
+                case 'updateUser':
+                    updateUser(ws, dataJSON);
                     break;
 
                 case 'updateOrderPaymentStatus':
