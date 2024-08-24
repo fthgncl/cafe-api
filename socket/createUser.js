@@ -5,8 +5,9 @@ require('../helper/stringTurkish');
 
 const { sendSocketMessage , sendMessageToAllClients } = require('../helper/socket');
 const Users = require("../database/models/Users");
+const {handleChangeUsers} = require("../helper/databaseChangesNotifier");
 
-module.exports = async function createUser(socket, {message, type, tokenData}) {
+module.exports = async function createUser(socket, {message, type, token, tokenData}) {
 
     const hasRequiredRoles = await checkUserRoles(tokenData.id);
     if (!hasRequiredRoles) {
@@ -42,6 +43,7 @@ module.exports = async function createUser(socket, {message, type, tokenData}) {
                         message: `${user.firstname} ${user.lastname} yeni kullanıcı olarak eklendi`,
                         data: user
                     })
+                    handleChangeUsers(user.id,token);
                 })
                 .catch(error => {
                     sendSocketMessage(socket,type,{

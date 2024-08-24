@@ -1,12 +1,29 @@
 const {sendMessageToAllClients} = require('./socket');
-const GetProducts = require("../database/models/Products");
+const Products = require("../database/models/Products");
 const Orders = require("../database/models/Orders");
 const Users = require("../database/models/Users");
+
+async function handleChangeUsers(userId,token) {
+    const messageType = 'newUserMessageType';
+    try {
+        const user = await Users.findById(userId);
+        sendMessageToAllClients(messageType, {
+            status: 'success',
+            message: 'Yeni kullanıcı başarıyla eklendi.',
+            addedByToken: token,
+            user
+        });
+        return user;
+    } catch (error) {
+        console.error('Yeni kullanıcı veri tabanına eklenemedi:', error);
+        throw error;
+    }
+}
 
 async function handleChangeProducts(productId,token) {
     const messageType = 'newProduct';
     try {
-        const product = await GetProducts.findById(productId);
+        const product = await Products.findById(productId);
         sendMessageToAllClients(messageType, {
             status: 'success',
             message: 'Yeni ürün başarıyla eklendi.',
@@ -41,4 +58,4 @@ async function handleNewOrder(orderId) {
     }
 }
 
-module.exports = {handleChangeProducts, handleNewOrder};
+module.exports = {handleChangeProducts, handleNewOrder, handleChangeUsers};

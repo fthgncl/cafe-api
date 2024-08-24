@@ -55,10 +55,6 @@ wss.on('connection', (ws) => {
            updateToken(ws, payload);
         }
 
-        console.log('_______________________________');
-        console.log('payload : ',payload);
-        console.log('_______________________________');
-
         if (payload.type === 'login') {
             if (!tokenIsActive) {
                 login(ws, payload);
