@@ -16,7 +16,13 @@ module.exports = async function updateUser(socket, {message, type, token}) {
         return;
     }
 
-    console.log(message);
+    if (token.id === message.userId) {
+        sendSocketMessage(socket, type, {
+            status: 'error',
+            message: 'Kendinize ait verileri düzenleyemezsiniz.'
+        });
+        return;
+    }
 
     const user = message;
     const userId = user.userId;
@@ -34,7 +40,7 @@ module.exports = async function updateUser(socket, {message, type, token}) {
                 user.password = bcryptPass;
             });
     }
-    console.log('userId :',userId);
+
     const updatedUser = await Users.findByIdAndUpdate(userId, user, {new: true}).select('-password');
 
     if (!updatedUser) {
