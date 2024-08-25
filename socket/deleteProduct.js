@@ -23,7 +23,7 @@ async function deleteProduct(socket, {message, type, tokenData}) {
                 } else {
                     sendMessageToAllClients(type, {
                         status: 'success',
-                        message: 'Ürün silindi',
+                        message: 'Bir ürün silindi',
                         deletedProductId: message.productId
                     });
                 }

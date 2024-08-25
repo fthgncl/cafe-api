@@ -41,7 +41,8 @@ module.exports = async function createUser(socket, {message, type, token, tokenD
                     sendMessageToAllClients(type,{
                         status: 'success',
                         message: `${user.firstname} ${user.lastname} yeni kullanıcı olarak eklendi`,
-                        data: user
+                        data: user,
+                        addedByToken: token,
                     })
                     handleChangeUsers(user.id,token);
                 })

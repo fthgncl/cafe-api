@@ -35,7 +35,8 @@ module.exports = async function createProduct(socket, { message, type, tokenData
             await sendSocketMessage(socket, type, {
                 status: 'success',
                 message: `${product.productname} ürün listesine eklenmiştir.`,
-                data: saveData
+                data: saveData,
+                addedByToken: token
             });
             handleChangeProducts(saveData.id,token);
         })

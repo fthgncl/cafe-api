@@ -2,7 +2,7 @@ const Products = require('../database/models/Products');
 const {checkUserRoles} = require('../helper/permissionManager');
 const {sendSocketMessage, sendMessageToAllClients} = require('../helper/socket');
 
-module.exports = async function updateProduct(socket, {message, type, tokenData}) {
+module.exports = async function updateProduct(socket, {message, type, tokenData, token}) {
 
     const hasRequiredRoles = await checkUserRoles(tokenData.id,['admin']);
     if (!hasRequiredRoles) {
@@ -17,20 +17,21 @@ module.exports = async function updateProduct(socket, {message, type, tokenData}
     const productId = product.productId;
     delete product.id;
 
-    const updatedProduct = await Products.findByIdAndUpdate(productId, product, {new: true});
-
-    if (!updatedProduct) {
-        sendSocketMessage(socket, type, {
-            status: 'error',
-            message: 'Ürün bulunamadı',
+    Products.findByIdAndUpdate(productId, product, {new: true})
+        .then(updatedProduct => {
+            sendMessageToAllClients(type,{
+                status: 'success',
+                message: `${updatedProduct.productname} bilgileri güncellendi.`,
+                updatedProduct,
+                addedByToken: token
+            })
         })
-        return;
-    }
-
-    sendMessageToAllClients(type, {
-        status: 'success',
-        message: 'Ürün başarıyla güncellendi',
-        updatedProduct
-    })
+        .catch(error => {
+            sendSocketMessage(socket,type,{
+                status: 'error',
+                message: 'Ürün bilgileri güncellenemedi.',
+                error
+            })
+        })
 
 }

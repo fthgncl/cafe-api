@@ -5,7 +5,7 @@ require('../helper/stringTurkish');
 
 const {sendSocketMessage, sendMessageToAllClients} = require('../helper/socket');
 
-module.exports = async function updateUser(socket, {message, type, tokenData}) {
+module.exports = async function updateUser(socket, {message, type, tokenData,token}) {
 
     const hasRequiredRoles = await checkUserRoles(tokenData.id);
     if (!hasRequiredRoles) {
@@ -41,20 +41,22 @@ module.exports = async function updateUser(socket, {message, type, tokenData}) {
             });
     }
 
-    const updatedUser = await Users.findByIdAndUpdate(userId, user, {new: true}).select('-password');
-
-    if (!updatedUser) {
-        sendSocketMessage(socket, type, {
-            status: 'error',
-            message: 'Kullanıcı bulunamadı',
+    Users.findByIdAndUpdate(userId, user, {new: true}).select('-password')
+        .then(updatedUser => {
+            sendMessageToAllClients(type,{
+                status: 'success',
+                message: `${updatedUser.firstname} ${updatedUser.lastname} bilgileri güncellendi222`,
+                updatedUser,
+                addedByToken: token
+            })
         })
-        return;
-    }
+        .catch(error => {
+            sendSocketMessage(socket,type,{
+                status: 'error',
+                message: 'Kullanıcı bilgileri güncellenemedi.',
+                error
+            })
+        })
 
-    sendMessageToAllClients(type, {
-        status: 'success',
-        message: 'Kullanıcı başarıyla güncellendi',
-        updatedUser
-    })
 
 }

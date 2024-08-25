@@ -4,7 +4,7 @@ const Orders = require("../database/models/Orders");
 const Users = require("../database/models/Users");
 
 async function handleChangeUsers(userId,token) {
-    const messageType = 'newUserMessageType';
+    const messageType = 'newUser';
     try {
         const user = await Users.findById(userId);
         sendMessageToAllClients(messageType, {
