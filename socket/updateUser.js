@@ -34,12 +34,7 @@ module.exports = async function updateUser(socket, {message, type, tokenData,tok
     if (user.lastname) {
         user.lastname = user.lastname.toUpperOnlyFirstChar();
     }
-    if (user.password) {
-        await bcrypt.hash(user.password, 10)
-            .then(bcryptPass => {
-                user.password = bcryptPass;
-            });
-    }
+    
 
     Users.findByIdAndUpdate(userId, user, {new: true}).select('-password')
         .then(updatedUser => {

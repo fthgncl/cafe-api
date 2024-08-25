@@ -17,6 +17,13 @@ module.exports = async function updateProduct(socket, {message, type, tokenData,
     const productId = product.productId;
     delete product.id;
 
+    if (product.productname) {
+        product.productname = product.productname.toUpperOnlyFirstChar();
+    }
+    if (product.productcategory) {
+        product.productcategory = product.productcategory.toUpperOnlyFirstChar();
+    }
+
     Products.findByIdAndUpdate(productId, product, {new: true})
         .then(updatedProduct => {
             sendMessageToAllClients(type,{
