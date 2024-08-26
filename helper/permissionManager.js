@@ -92,13 +92,13 @@ async function checkUserRoles(userId, roles = ['sys_admin'], fullMatch = false) 
             return roles.some(role => userRoles.includes(role));    // roles array'ında bulunan her hangi bir index userRoles array'ında da bulunuyorsa true döner
 
     } catch (error) {
-        console.error(error);
+        console.error(`Kullanıcının (id:${userId}) yetkileri kontrol edilirken hata oluştu:`, error);
     }
 }
 
 function setUserPermissions(userId, permissions) {
     return new Promise((resolve, reject) => {
-        User.findByIdAndUpdate(userId, {permissions: alfabetikSirala(permissions)}, { new: true })
+        User.findByIdAndUpdate(userId, {permissions: alfabetikSirala(permissions)}, {new: true})
             .then(data => resolve({
                 status: true,
                 message: 'İşlem başarılı',
