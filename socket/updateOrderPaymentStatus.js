@@ -1,6 +1,7 @@
 const Orders = require('../database/models/Orders');
 const {sendSocketMessage,sendMessageToAllClients} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
+const { updatedOrderPaymentStatus } = require("./../helper/salesControl")
 
 async function updateOrderPaymentStatus(socket, {message, type, tokenData}) {
     try {
@@ -10,13 +11,20 @@ async function updateOrderPaymentStatus(socket, {message, type, tokenData}) {
             return;
         }
 
-        Orders.findByIdAndUpdate(message.orderId, {paymentStatus:message.paymentStatus}, {new:true})
+        Orders.findByIdAndUpdate(message.orderId, {paymentStatus:message.paymentStatus}, {new:false})
             .then(updatedOrder => {
                 if (updatedOrder) {
+
+                    const oldPaymentStatus = updatedOrder.paymentStatus;
+                    const newPaymentStatus = message.paymentStatus;
+                    const kitchenStatus = updatedOrder.kitchenStatus;
+                    updatedOrder = { ...updatedOrder._doc , paymentStatus:message.paymentStatus}
+                    updatedOrderPaymentStatus(updatedOrder,oldPaymentStatus,newPaymentStatus,kitchenStatus);
+
                     sendMessageToAllClients(type, {
                         status: 'success',
                         message: 'Siparişin ödeme durumu güncellendi.',
-                        updatedOrder : updatedOrder
+                        updatedOrder
                     });
                 } else {
                     sendSocketMessage(socket, type, {

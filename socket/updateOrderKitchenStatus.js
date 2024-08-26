@@ -1,6 +1,7 @@
 const Orders = require('../database/models/Orders');
 const {sendSocketMessage,sendMessageToAllClients} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
+const {updatedOrderKitchenStatustStatus} = require("../helper/salesControl");
 
 async function updateOrderKitchenStatus(socket, {message, type, tokenData}) {
     try {
@@ -14,6 +15,12 @@ async function updateOrderKitchenStatus(socket, {message, type, tokenData}) {
         Orders.findById(message.orderId)
             .then(order => {
                 if (order && order.paymentStatus !== 'İptal Edildi') {
+
+                    const oldKitchenStatus = order.kitchenStatus;
+                    const newKitchenStatus = message.kitchenStatus;
+                    const paymentStatus = order.paymentStatus;
+                    updatedOrderKitchenStatustStatus({...order._doc},oldKitchenStatus,newKitchenStatus,paymentStatus)
+
                     return Orders.findByIdAndUpdate(message.orderId, { kitchenStatus: message.kitchenStatus }, { new: true });
                 } else if (order) {
                     sendSocketMessage(socket, type, {
