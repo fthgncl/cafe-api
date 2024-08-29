@@ -20,6 +20,7 @@ const updateProduct = require('./updateProduct');
 const orderEntry = require('./orderEntry');
 const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
+const updateOrderDiscount = require('./updateOrderDiscount');
 
 setWebSocketServer(wss);
 
@@ -125,6 +126,10 @@ wss.on('connection', (ws) => {
 
                 case 'updateOrderKitchenStatus':
                     updateOrderKitchenStatus(ws, payload);
+                    break;
+
+                case 'updateOrderDiscount':
+                    updateOrderDiscount(ws, payload);
                     break;
 
 
