@@ -63,7 +63,8 @@ function controlDataTables(connection) {
                     .then(results => {
                         resolve({
                             status: 'success',
-                            message: `Veritabanı kontrolleri yapıldı ve bağlantı kuruldu.`
+                            message: `Veritabanı kontrolleri yapıldı ve bağlantı kuruldu.`,
+                            connection
                         });
                         results.forEach(result => console.log(result.message))
                     })

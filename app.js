@@ -1,12 +1,12 @@
 (async () => {
     try {
-        const { connection, message } = await require('./database/database')();
+        const {connection , status , message} = await require('./database/database')();
         console.log(message);
-        if (!connection)
+        if ( status !== 'success' )
             return;
 
         const startSocketServer = require('./socket/main');
-        startSocketServer(connection)
+        startSocketServer(connection);
     } catch (error) {
         console.log(error);
     }
