@@ -1,11 +1,13 @@
 const mysql = require('mysql');
 const { mysqlDatabase } = require('../config.json');
+const controlUsersTable = require('./models/Users');
 
 const connection = mysql.createConnection({
     host: mysqlDatabase.host,
     user: mysqlDatabase.user,
     password: mysqlDatabase.password,
-    port: mysqlDatabase.port
+    port: mysqlDatabase.port,
+    database: mysqlDatabase.database
 });
 
 module.exports = () => {
@@ -13,7 +15,7 @@ module.exports = () => {
         connection.connect((err) => {
             if (err) {
                 return reject({
-                    connection: false,
+                    status: 'error',
                     message: 'Veritabanı bağlantısı kurulamadı. Lütfen bağlantı bilgilerini kontrol edin.',
                     error: err
                 });
@@ -23,7 +25,7 @@ module.exports = () => {
             connection.query(`SHOW DATABASES LIKE '${mysqlDatabase.database}'`, (err, results) => {
                 if (err) {
                     return reject({
-                        connection: false,
+                        status: 'error',
                         message: 'Veritabanı kontrolü sırasında bir hata oluştu. Hata detaylarını inceleyin.',
                         error: err
                     });
@@ -34,21 +36,17 @@ module.exports = () => {
                     connection.query(`CREATE DATABASE ${mysqlDatabase.database}`, (err) => {
                         if (err) {
                             return reject({
-                                connection: false,
+                                status: 'error',
                                 message: 'Veritabanı oluşturulamadı. Oluşturma işlemi sırasında bir hata meydana geldi.',
                                 error: err
                             });
                         }
-                        resolve({
-                            connection: true,
-                            message: 'Veritabanı başarıyla oluşturuldu ve bağlantı sağlandı.'
-                        });
+                        // Veritabanı oluşturulduktan sonra tabloları kontrol et ve oluştur
+                        controlUsersTable(connection).then(resolve).catch(reject);
                     });
                 } else {
-                    resolve({
-                        connection: true,
-                        message: 'Veritabanı zaten mevcut ve bağlantı başarılı bir şekilde gerçekleştirildi.'
-                    });
+                    // Veritabanı mevcutsa tabloları kontrol et ve oluştur
+                    controlUsersTable(connection).then(resolve).catch(reject);
                 }
             });
         });
