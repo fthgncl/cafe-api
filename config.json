@@ -13,6 +13,13 @@
     "port": 27017,
     "name": "cafe-db"
   },
+  "mysqlDatabase": {
+    "host"     : "localhost",
+    "user"     : "root",
+    "password" : "root",
+    "database" : "cafe1908database",
+    "port": 3306
+  },
   "tokenLifeTimeMinute": 60,
   "cryptoSecretKey": "1908Cafe!",
   "permissions": {
