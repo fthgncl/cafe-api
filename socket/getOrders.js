@@ -26,7 +26,7 @@ async function getOrders(socket, { type, tokenData }) {
         const users = await Users.find({ _id: { $in: userIds } });
         const userMap = new Map(users.map(user => [user._id.toString(), user]));
 
-        const hasPaymentProcessRole = await checkUserRoles(tokenData.id, ['payment_processing']);
+        const hasPaymentProcessRole = await checkUserRoles(tokenData.id, ['order_entry','payment_processing','discount_application']);
         const hasOrderHandlingRole = await checkUserRoles(tokenData.id, ['order_handling']);
 
         // Siparişleri işleyin
