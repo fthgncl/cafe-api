@@ -1,3 +1,5 @@
+const bcrypt = require("bcryptjs");
+
 const controlUsersTable = (connection) => {
     return new Promise((resolve, reject) => {
         const createUsersTable = `
@@ -28,7 +30,7 @@ const controlUsersTable = (connection) => {
 
             // Tablo oluşturulduktan sonra, kayıt olup olmadığını kontrol et
             const checkRecords = 'SELECT COUNT(*) AS count FROM users';
-            connection.query(checkRecords, (err, results) => {
+            connection.query(checkRecords, async (err, results) => {
                 if (err) {
                     return reject({
                         status: 'error',
@@ -39,9 +41,21 @@ const controlUsersTable = (connection) => {
 
                 if (results[0].count === 0) {
                     // Tablo boşsa yönetici kaydı
+
+                    let bcryptPass;
+                    await bcrypt.hash('admin', 10)
+                        .then(bcryptData => {
+                            bcryptPass = bcryptData;
+                        })
+                        .catch(error => reject({
+                            status: 'error',
+                            message: 'Admin kullanıcı oluşturulurken şifreleme işlemi başarız.',
+                            error
+                        }))
+
                     const inserDefaultAdminUser = `
                         INSERT INTO users (firstname, lastname, username, phone, password, permissions)
-                        VALUES ('admin', 'admin', 'admin', '1234567890', 'admin', 'a');
+                        VALUES ('admin', 'admin', 'admin', 'test' , '${bcryptPass}', 'a');
                     `;
 
                     connection.query(inserDefaultAdminUser, (err) => {
