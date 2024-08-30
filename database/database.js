@@ -1,6 +1,7 @@
 const mysql = require('mysql');
 const {mysqlDatabase} = require('../config.json');
 const controlUsersTable = require('./models/Users');
+const { queryAsync } = require('../helper/databaseHelper');
 
 const connection = mysql.createConnection({
     host: mysqlDatabase.host,
@@ -8,17 +9,6 @@ const connection = mysql.createConnection({
     password: mysqlDatabase.password,
     port: mysqlDatabase.port
 });
-
-function queryAsync(query, values) {
-    return new Promise((resolve, reject) => {
-        connection.query(query, values, (err, results) => {
-            if (err) {
-                return reject(err);
-            }
-            resolve(results);
-        });
-    });
-}
 
 module.exports = () => {
     return new Promise((resolve, reject) => {
@@ -32,10 +22,10 @@ module.exports = () => {
             }
 
             // Veritabanının mevcut olup olmadığını kontrol et
-            queryAsync(`SHOW DATABASES LIKE '${mysqlDatabase.database}'`)
+            queryAsync(connection,`SHOW DATABASES LIKE '${mysqlDatabase.database}'`)
                 .then(results => {
                     if (results.length !== 1)
-                        queryAsync(`CREATE DATABASE ${mysqlDatabase.database}`)
+                        queryAsync(connection,`CREATE DATABASE ${mysqlDatabase.database}`)
                             .then(() => controlDataTables(connection)
                                 .then(resolve)
                                 .catch(reject))
@@ -65,7 +55,7 @@ function controlDataTables(connection) {
 
     return new Promise((resolve, reject) => {
 
-        queryAsync(`USE ${mysqlDatabase.database}`)
+        queryAsync(connection,`USE ${mysqlDatabase.database}`)
             .then(() => {
                 Promise.all([
                     controlUsersTable(connection)
