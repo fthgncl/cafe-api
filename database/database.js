@@ -1,14 +1,24 @@
 const mysql = require('mysql');
-const { mysqlDatabase } = require('../config.json');
+const {mysqlDatabase} = require('../config.json');
 const controlUsersTable = require('./models/Users');
 
 const connection = mysql.createConnection({
     host: mysqlDatabase.host,
     user: mysqlDatabase.user,
     password: mysqlDatabase.password,
-    port: mysqlDatabase.port,
-    database: mysqlDatabase.database
+    port: mysqlDatabase.port
 });
+
+function queryAsync(query, values) {
+    return new Promise((resolve, reject) => {
+        connection.query(query, values, (err, results) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(results);
+        });
+    });
+}
 
 module.exports = () => {
     return new Promise((resolve, reject) => {
@@ -22,33 +32,58 @@ module.exports = () => {
             }
 
             // Veritabanının mevcut olup olmadığını kontrol et
-            connection.query(`SHOW DATABASES LIKE '${mysqlDatabase.database}'`, (err, results) => {
-                if (err) {
-                    return reject({
-                        status: 'error',
-                        message: 'Veritabanı kontrolü sırasında bir hata oluştu. Hata detaylarını inceleyin.',
-                        error: err
-                    });
-                }
-
-                if (results.length === 0) {
-                    // Veritabanı mevcut değilse oluştur
-                    connection.query(`CREATE DATABASE ${mysqlDatabase.database}`, (err) => {
-                        if (err) {
-                            return reject({
+            queryAsync(`SHOW DATABASES LIKE '${mysqlDatabase.database}'`)
+                .then(results => {
+                    if (results.length !== 1)
+                        queryAsync(`CREATE DATABASE ${mysqlDatabase.database}`)
+                            .then(() => controlDataTables(connection)
+                                .then(resolve)
+                                .catch(reject))
+                            .catch(error => reject({
                                 status: 'error',
                                 message: 'Veritabanı oluşturulamadı. Oluşturma işlemi sırasında bir hata meydana geldi.',
-                                error: err
-                            });
-                        }
-                        // Veritabanı oluşturulduktan sonra tabloları kontrol et ve oluştur
-                        controlUsersTable(connection).then(resolve).catch(reject);
+                                error
+                            }))
+                    else controlDataTables(connection)
+                        .then(resolve)
+                        .catch(reject)
+
+
+                })
+                .catch(error => {
+                    reject({
+                        status: 'error',
+                        message: 'Veritabanı veya tablo işlemleri sırasında bir hata oluştu.',
+                        error: error
                     });
-                } else {
-                    // Veritabanı mevcutsa tabloları kontrol et ve oluştur
-                    controlUsersTable(connection).then(resolve).catch(reject);
-                }
-            });
+                });
         });
     });
-};
+}
+
+function controlDataTables(connection) {
+
+    return new Promise((resolve, reject) => {
+
+        queryAsync(`USE ${mysqlDatabase.database}`)
+            .then(() => {
+                Promise.all([
+                    controlUsersTable(connection)
+                ])
+                    .then(results => {
+                        resolve({
+                            status: 'success',
+                            message: `Veritabanı kontrolleri yapıldı ve bağlantı kuruldu.`
+                        });
+                        results.forEach(result => console.log(result.message))
+                    })
+                    .catch(reject);
+            })
+            .catch(error => reject({
+                status: 'error',
+                message: 'Veritabanı seçilemedi.',
+                error: error
+            }));
+
+    })
+}

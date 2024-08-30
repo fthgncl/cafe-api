@@ -17,7 +17,7 @@
     "host"     : "localhost",
     "user"     : "root",
     "password" : "root",
-    "database" : "cafe1908database",
+    "database" : "cafe1908",
     "port": 3306
   },
   "tokenLifeTimeMinute": 60,

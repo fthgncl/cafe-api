@@ -22,8 +22,6 @@ const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
 const updateOrderDiscount = require('./updateOrderDiscount');
 
-setWebSocketServer(wss);
-
 function parseJSON(message) {
 
     try {
@@ -34,116 +32,123 @@ function parseJSON(message) {
     }
 }
 
-wss.on('connection', (ws) => {
-    console.log('Cihaz Bağlandı');
-    ws.on('message', (data) => {
-        let dataJSON = parseJSON(data);
+function startSocketServer(dbConnection) {
+    setWebSocketServer(wss);
 
-        if (!dataJSON) {
-            sendSocketMessage(ws, 'messageError', {error: 'Invalid JSON format'});
-            return;
-        }
+    wss.on('connection', (ws) => {
+        console.log('Cihaz Bağlandı');
+        ws.on('message', (data) => {
+            let dataJSON = parseJSON(data);
+
+            if (!dataJSON) {
+                sendSocketMessage(ws, 'messageError', {error: 'Invalid JSON format'});
+                return;
+            }
 
 
-        const payload = {
-            ...dataJSON,
-            tokenData : getTokenData(dataJSON.token)
-        }
+            const payload = {
+                ...dataJSON,
+                tokenData: getTokenData(dataJSON.token)
+            }
 
-        const tokenIsActive = validateToken(payload);
+            const tokenIsActive = validateToken(payload);
 
-        if (tokenIsActive) {
-           updateToken(ws, payload);
-        }
+            if (tokenIsActive) {
+                updateToken(ws, payload);
+            }
 
-        if (payload.type === 'login') {
-            if (!tokenIsActive) {
-                login(ws, payload);
+            if (payload.type === 'login') {
+                if (!tokenIsActive) {
+                    login(ws, dbConnection, payload);
+                } else {
+                    sendSocketMessage(ws, 'login', {error: 'Already logged in'});
+                }
+            } else if (!tokenIsActive) {
+                sendSocketMessage(ws, payload.type, {error: 'Invalid or expired token'});
             } else {
-                sendSocketMessage(ws, 'login', {error: 'Already logged in'});
+                switch (payload.type) {
+
+                    // USER PROCESS
+                    case 'createUser':
+                        createUser(ws, payload);
+                        break;
+
+                    case 'deleteUser':
+                        deleteUser(ws, payload);
+                        break;
+
+                    case 'updateUser':
+                        updateUser(ws, payload);
+                        break;
+
+                    case 'getUsers':
+                        getUsers(ws, payload);
+                        break;
+
+                    case 'getUser':
+                        getUser(ws, payload);
+                        break;
+
+
+                    // PRODUCT PROCESS
+                    case 'createProduct':
+                        createProduct(ws, payload);
+                        break;
+
+                    case 'deleteProduct':
+                        deleteProduct(ws, payload);
+                        break;
+
+                    case 'updateProduct':
+                        updateProduct(ws, payload);
+                        break;
+
+                    case 'getProducts':
+                        getProducts(ws, payload);
+                        break;
+
+                    case 'getProduct':
+                        getProduct(ws, payload);
+                        break;
+
+
+                    // ORDER PROCESS
+                    case 'orderEntry':
+                        orderEntry(ws, payload);
+                        break;
+
+                    case 'getOrders':
+                        getOrders(ws, payload);
+                        break;
+
+                    case 'updateOrderPaymentStatus':
+                        updateOrderPaymentStatus(ws, payload);
+                        break;
+
+                    case 'updateOrderKitchenStatus':
+                        updateOrderKitchenStatus(ws, payload);
+                        break;
+
+                    case 'updateOrderDiscount':
+                        updateOrderDiscount(ws, payload);
+                        break;
+
+
+                    default:
+                        console.error('Unknown message type:', payload.type);
+                        sendSocketMessage(ws, 'messageError', {error: 'Unknown message type'});
+                }
             }
-        } else if (!tokenIsActive) {
-            sendSocketMessage(ws, payload.type, {error: 'Invalid or expired token'});
-        } else {
-            switch (payload.type) {
+        });
 
-                // USER PROCESS
-                case 'createUser':
-                    createUser(ws, payload);
-                    break;
-
-                case 'deleteUser':
-                    deleteUser(ws, payload);
-                    break;
-
-                case 'updateUser':
-                    updateUser(ws, payload);
-                    break;
-
-                case 'getUsers':
-                    getUsers(ws, payload);
-                    break;
-
-                case 'getUser':
-                    getUser(ws, payload);
-                    break;
-
-
-                // PRODUCT PROCESS
-                case 'createProduct':
-                    createProduct(ws, payload);
-                    break;
-
-                case 'deleteProduct':
-                    deleteProduct(ws, payload);
-                    break;
-
-                case 'updateProduct':
-                    updateProduct(ws, payload);
-                    break;
-
-                case 'getProducts':
-                    getProducts(ws, payload);
-                    break;
-
-                case 'getProduct':
-                    getProduct(ws, payload);
-                    break;
-
-
-                // ORDER PROCESS
-                case 'orderEntry':
-                    orderEntry(ws, payload);
-                    break;
-
-                case 'getOrders':
-                    getOrders(ws, payload);
-                    break;
-
-                case 'updateOrderPaymentStatus':
-                    updateOrderPaymentStatus(ws, payload);
-                    break;
-
-                case 'updateOrderKitchenStatus':
-                    updateOrderKitchenStatus(ws, payload);
-                    break;
-
-                case 'updateOrderDiscount':
-                    updateOrderDiscount(ws, payload);
-                    break;
-
-
-                default:
-                    console.error('Unknown message type:', payload.type);
-                    sendSocketMessage(ws, 'messageError', {error: 'Unknown message type'});
-            }
-        }
+        ws.on('close', () => {
+            console.log('Client disconnected');
+            // Burada bağlantı kapandığında yapılacak işlemler ekleyebilirsiniz
+        });
     });
 
-    ws.on('close', () => {
-        console.log('Client disconnected');
-        // Burada bağlantı kapandığında yapılacak işlemler ekleyebilirsiniz
-    });
-});
+    console.log(`WebSocket server is running on ws://localhost:${port}`);
 
-console.log(`WebSocket server is running on ws://localhost:${port}`);
+}
+
+module.exports = startSocketServer;

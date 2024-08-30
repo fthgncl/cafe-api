@@ -5,7 +5,8 @@
         if (!connection)
             return;
 
-        require('./socket/main');
+        const startSocketServer = require('./socket/main');
+        startSocketServer(connection)
     } catch (error) {
         console.log(error);
     }
