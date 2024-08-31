@@ -1,6 +1,9 @@
+const { connectDatabase } = require('./database/database');
+
 (async () => {
     try {
-        const {connection , status , message} = await require('./database/database')();
+        const {connection , status , message} = await connectDatabase();
+
         console.log(message);
         if ( status !== 'success' )
             return;

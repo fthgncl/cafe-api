@@ -1,70 +1,62 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const controlOrdersTable = (connection) => {
+    return new Promise((resolve, reject) => {
+        // Orders tablosunu oluştur
+        const createOrdersTable = `
+            CREATE TABLE IF NOT EXISTS orders (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                customerName VARCHAR(50) NOT NULL,
+                orderNote VARCHAR(255),
+                paymentStatus ENUM('Ödendi', 'Daha Sonra Ödenecek', 'Hediye', 'İptal Edildi') NOT NULL,
+                discount DECIMAL(5, 2) DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),
+                discountedPrice DECIMAL(10, 2) DEFAULT 0 CHECK (discountedPrice >= 0),
+                totalPrice DECIMAL(10, 2) NOT NULL CHECK (totalPrice >= 0),
+                kitchenStatus ENUM('Beklemede', 'Hazırlanıyor', 'Hazırlandı') NOT NULL DEFAULT 'Beklemede',
+                createdDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+                userId INT NOT NULL,
+                FOREIGN KEY (userId) REFERENCES users(id)
+            );
+        `;
 
-const OrderSchema = new Schema({
-    orders: [{
-        product: {
-            type: Schema.Types.ObjectId,
-            ref: 'products',
-            required: true
-        },
-        quantity: {
-            type: Number,
-            required: true,
-            min: [1, '`{PATH}` alanı ({VALUE}) 1\'den küçük olamaz']
-        },
-        size: {
-            type: String,
-            required: true
-        },
-        content: {
-            type: String
-        }
-    }],
-    orderNote: {
-        type: String,
-        default: ''
-    },
-    customerName: {
-        type: String,
-        required: true
-    },
-    paymentStatus: {
-        type: String,
-        enum: ['Ödendi', 'Daha Sonra Ödenecek', 'Hediye', 'İptal Edildi'],
-        required: true
-    },
-    discount: {
-        type: Number,
-        default: 0,
-        min: [0, '`{PATH}` alanı ({VALUE}) negatif olamaz'],
-        max: [100, '`{PATH}` alanı en fazla 100 olabilir']
-    },
-    discountedPrice: {
-        type: Number,
-        default: 0,
-        min: [0, '`{PATH}` alanı ({VALUE}) negatif olamaz']
-    },
-    totalPrice: {
-        type: Number,
-        required: true,
-        min: [0, '`{PATH}` alanı ({VALUE}) negatif olamaz']
-    },
-    kitchenStatus: {
-        type: String,
-        enum: ['Beklemede', 'Hazırlanıyor', 'Hazırlandı'],
-        default: 'Beklemede',
-        required: true
-    },
-    createdDate: {
-        type: Date,
-        default: Date.now
-    },
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: 'users',
-        required: true
-    }
-});
+        // Order Items tablosunu oluştur
+        const createOrderItemsTable = `
+            CREATE TABLE IF NOT EXISTS order_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                orderId INT NOT NULL,
+                productId INT NOT NULL,
+                quantity INT NOT NULL CHECK (quantity >= 1),
+                size VARCHAR(10) NOT NULL,
+                content VARCHAR(255),
+                FOREIGN KEY (orderId) REFERENCES orders(id),
+                FOREIGN KEY (productId) REFERENCES products(id)
+            );
+        `;
 
-module.exports = mongoose.model('orders', OrderSchema);
+        // Tabloları oluştur
+        connection.query(createOrdersTable, (err, results) => {
+            if (err) {
+                return reject({
+                    status: 'error',
+                    message: 'Orders tablosu oluşturulurken bir hata oluştu.',
+                    error: err
+                });
+            }
+
+            connection.query(createOrderItemsTable, (err, results) => {
+                if (err) {
+                    return reject({
+                        status: 'error',
+                        message: 'Order Items tablosu oluşturulurken bir hata oluştu.',
+                        error: err
+                    });
+                }
+
+                resolve({
+                    status: 'success',
+                    message: 'Orders ve Order Items tabloları başarıyla oluşturuldu.'
+                });
+            });
+        });
+    });
+};
+
+module.exports = controlOrdersTable;

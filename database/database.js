@@ -1,18 +1,50 @@
+// dbConnection.js
 const mysql = require('mysql');
 const {mysqlDatabase} = require('../config.json');
 const controlUsersTable = require('./models/Users');
-const { queryAsync } = require('../helper/databaseHelper');
+const controlOrdersTable = require('./models/Orders');
+const controlProductsTable = require('./models/Products');
 
-const connection = mysql.createConnection({
-    host: mysqlDatabase.host,
-    user: mysqlDatabase.user,
-    password: mysqlDatabase.password,
-    port: mysqlDatabase.port
-});
+let connection;
+let isConnected = false;
 
-module.exports = () => {
+function createConnection() {
+    if (!connection) {
+        connection = mysql.createConnection({
+            host: mysqlDatabase.host,
+            user: mysqlDatabase.user,
+            password: mysqlDatabase.password,
+            port: mysqlDatabase.port
+        });
+
+        // connection.queryAsync metodunu tanımlayın
+        connection.queryAsync = function (query, values) {
+            return new Promise((resolve, reject) => {
+                this.query(query, values, (err, results) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve(results);
+                });
+            });
+        };
+
+    }
+    return connection;
+}
+
+function connectDatabase() {
     return new Promise((resolve, reject) => {
-        connection.connect((err) => {
+        const conn = createConnection();
+        if (isConnected) {
+            return resolve({
+                status: 'success',
+                message: 'Bağlantı zaten kurulu.',
+                connection: conn
+            });
+        }
+
+        conn.connect((err) => {
             if (err) {
                 return reject({
                     status: 'error',
@@ -22,23 +54,29 @@ module.exports = () => {
             }
 
             // Veritabanının mevcut olup olmadığını kontrol et
-            queryAsync(connection,`SHOW DATABASES LIKE '${mysqlDatabase.database}'`)
+            conn.queryAsync(`SHOW DATABASES LIKE '${mysqlDatabase.database}'`)
                 .then(results => {
-                    if (results.length !== 1)
-                        queryAsync(connection,`CREATE DATABASE ${mysqlDatabase.database}`)
-                            .then(() => controlDataTables(connection)
-                                .then(resolve)
+                    if (results.length !== 1) {
+                        conn.queryAsync(`CREATE DATABASE ${mysqlDatabase.database}`)
+                            .then(() => controlDataTables(conn)
+                                .then(result => {
+                                    isConnected = true;
+                                    resolve(result);
+                                })
                                 .catch(reject))
                             .catch(error => reject({
                                 status: 'error',
                                 message: 'Veritabanı oluşturulamadı. Oluşturma işlemi sırasında bir hata meydana geldi.',
                                 error
-                            }))
-                    else controlDataTables(connection)
-                        .then(resolve)
-                        .catch(reject)
-
-
+                            }));
+                    } else {
+                        controlDataTables(conn)
+                            .then(result => {
+                                isConnected = true;
+                                resolve(result);
+                            })
+                            .catch(reject);
+                    }
                 })
                 .catch(error => {
                     reject({
@@ -51,22 +89,22 @@ module.exports = () => {
     });
 }
 
-function controlDataTables(connection) {
-
+function controlDataTables(conn) {
     return new Promise((resolve, reject) => {
-
-        queryAsync(connection,`USE ${mysqlDatabase.database}`)
+        conn.queryAsync(`USE ${mysqlDatabase.database}`)
             .then(() => {
                 Promise.all([
-                    controlUsersTable(connection)
+                    controlUsersTable(conn),
+                    controlProductsTable(conn),
+                    controlOrdersTable(conn)
                 ])
                     .then(results => {
                         resolve({
                             status: 'success',
                             message: `Veritabanı kontrolleri yapıldı ve bağlantı kuruldu.`,
-                            connection
+                            connection: conn
                         });
-                        results.forEach(result => console.log(result.message))
+                        results.forEach(result => console.log(result.message));
                     })
                     .catch(reject);
             })
@@ -75,6 +113,11 @@ function controlDataTables(connection) {
                 message: 'Veritabanı seçilemedi.',
                 error: error
             }));
-
-    })
+    });
 }
+
+module.exports = {
+    connectDatabase,
+    isConnected,
+    connection: createConnection()
+};
