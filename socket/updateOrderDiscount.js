@@ -1,8 +1,8 @@
-const Orders = require('../database/models/Orders');
-const {sendSocketMessage, sendMessageToAllClients} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
+const { sendSocketMessage, sendMessageToAllClients } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
+const { connection } = require('../database/database');
 
-async function updateOrderDiscount(socket, {message, type, tokenData}) {
+async function updateOrderDiscount(socket, { message, type, tokenData }) {
     try {
         const permissionsControlResult = await updateOrderDiscountPermissionsControl(tokenData);
 
@@ -10,8 +10,8 @@ async function updateOrderDiscount(socket, {message, type, tokenData}) {
             sendSocketMessage(socket, type, permissionsControlResult);
             return;
         }
-        console.log(message);
-        const {discount, orderId} = message;
+
+        const { discount, orderId } = message;
 
         if (typeof discount === 'undefined' || discount === null || typeof orderId === 'undefined' || orderId === null) {
             sendSocketMessage(socket, type, {
@@ -29,72 +29,43 @@ async function updateOrderDiscount(socket, {message, type, tokenData}) {
             return;
         }
 
-        Orders.findById(message.orderId)
-            .then(order => {
-                if (order) {
+        // Siparişi orderId'ye göre veritabanından al
+        const selectOrderQuery = 'SELECT * FROM orders WHERE id = ?';
+        const orderResult = await connection.queryAsync(selectOrderQuery, [orderId]);
 
-                    const updateProps = {
-                        discount,
-                        discountedPrice: order.totalPrice - order.totalPrice * discount / 100
-                    }
+        if (orderResult.length > 0) {
+            const order = orderResult[0];
 
-                    Orders.findByIdAndUpdate(message.orderId, updateProps, {new: true})
-                        .then(updatedOrder => {
-                            if (updatedOrder) {
-                                sendMessageToAllClients(type, {
-                                    status: 'success',
-                                    message: 'İndirim başarıyla uygulandı.',
-                                    orderId,
-                                    newPrices: updateProps
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            sendSocketMessage(socket, type, {
-                                status: 'error',
-                                message: 'İndirim yapılırken hata oluştu.',
-                                error
-                            })
-                        })
+            const updateProps = {
+                discount,
+                discountedPrice: order.totalPrice - order.totalPrice * discount / 100
+            };
 
-                } else {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Sipariş numarası veritabanıyla eşleşmedi.'
-                    });
-                }
-            })
-            .then(updatedOrder => {
-                if (updatedOrder) {
-                    sendMessageToAllClients(type, {
-                        status: 'success',
-                        message: 'Siparişin mutfak durumu güncellendi.',
-                        orderInfo: {
-                            id: updatedOrder.id,
-                            newKitchenStatus: updatedOrder.kitchenStatus
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                if (error.message !== 'Sipariş iptal edildi, güncelleme yapılmadı.' && error.message !== 'Sipariş bulunamadı.') {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Sipariş güncellenirken veritabanında hata oluştu.',
-                        error: error.message
-                    });
-                }
-                console.error('Güncelleme sırasında bir hata oluştu:', error);
+            // Siparişin indirim ve indirimli fiyat bilgisini güncelle
+            const updateOrderQuery = 'UPDATE orders SET discount = ?, discountedPrice = ? WHERE id = ?';
+            await connection.queryAsync(updateOrderQuery, [updateProps.discount, updateProps.discountedPrice, orderId]);
+
+            sendMessageToAllClients(type, {
+                status: 'success',
+                message: 'İndirim başarıyla uygulandı.',
+                orderId,
+                newPrices: updateProps
             });
 
+        } else {
+            sendSocketMessage(socket, type, {
+                status: 'error',
+                message: 'Sipariş numarası veritabanıyla eşleşmedi.'
+            });
+        }
 
     } catch (error) {
         sendSocketMessage(socket, type, {
             status: 'error',
-            message: 'Sipariş mutfak durumu güncellenirken hata oluştu.',
+            message: 'Sipariş indirim durumu güncellenirken hata oluştu.',
             error: error.message
         });
-        console.error('Sipariş mutfak durumu güncellenirken hata : ', error);
+        console.error('Sipariş indirim durumu güncellenirken hata: ', error);
     }
 }
 
@@ -104,19 +75,19 @@ async function updateOrderDiscountPermissionsControl(tokenData) {
         if (!hasRequiredRoles) {
             return {
                 status: 'error',
-                message: 'Siparişin indirim durumunu için gerekli izinlere sahip değilsiniz.'
+                message: 'Siparişin indirim durumunu güncellemek için gerekli izinlere sahip değilsiniz.'
             };
         }
 
         return {
             status: 'success',
             message: 'Siparişin indirim durumunu güncellemek için yeterli yetkiye sahipsiniz.'
-        }
+        };
 
     } catch (error) {
         return {
             status: 'error',
-            message: 'Siparişin indirim durumunu güncellenirken bir hata meydana geldi.',
+            message: 'Kullanıcı rolleri kontrolü sırasında bir hata meydana geldi.',
             details: error
         };
     }

@@ -1,51 +1,59 @@
-const Product = require('../database/models/Products');
+const {connection} = require('../database/database');
 const {checkUserRoles} = require('../helper/permissionManager');
-const {sendSocketMessage} = require('../helper/socket');
-const {handleChangeProducts} = require("../helper/databaseChangesNotifier");
+const {sendSocketMessage, sendMessageToAllClients} = require('../helper/socket');
+const {readProduct} = require('./getProduct');
 require('../helper/stringTurkish');
 
-module.exports = async function createProduct(socket, { message, type, tokenData, token }) {
-
-    const hasRequiredRoles = await checkUserRoles(tokenData.id, ['admin']);
-    if (!hasRequiredRoles) {
-        sendSocketMessage(socket, type, {
-            status: 'error',
-            message: 'Bu işlemi gerçekleştirmek için yeterli yetkiniz bulunmuyor.'
-        });
-        return;
-    }
-
-    const product = new Product({
-        productname: message.productname,
-        productcategory: message.productcategory,
-        productprice: message.productprice,
-        sizes: message.sizes,
-        contents: message.contents
-    });
-
-    if (product.productname) {
-        product.productname = product.productname.toUpperOnlyFirstChar();
-    }
-    if (product.productcategory) {
-        product.productcategory = product.productcategory.toUpperOnlyFirstChar();
-    }
-
-    product.save()
-        .then(async saveData => {
+module.exports = async function createProduct(socket, {message, type, tokenData, token}) {
+    try {
+        const hasRequiredRoles = await checkUserRoles(tokenData.id, ['admin']);
+        if (!hasRequiredRoles) {
             await sendSocketMessage(socket, type, {
-                status: 'success',
-                message: `${product.productname} ürün listesine eklenmiştir.`,
-                data: saveData,
-                addedByToken: token
-            });
-            handleChangeProducts(saveData.id,token);
-        })
-        .catch(error => {
-            sendSocketMessage(socket, type, {
                 status: 'error',
-                message: 'Ürün kaydında bir hata oluştu. Lütfen tekrar deneyiniz.',
-                error
+                message: 'Bu işlemi gerçekleştirmek için yeterli yetkiniz bulunmuyor.'
             });
+            return;
+        }
+
+        const {productName, productCategory, sizes, contents} = message;
+        const newProduct = await connection.queryAsync(`INSERT INTO products (productName, productCategory) VALUES (?, ?)`, [productName.toUpperOnlyFirstChar(), productCategory.toUpperOnlyFirstChar()]);
+        const productId = newProduct.insertId;
+
+        if (sizes && sizes.length > 0) {
+            const sizePromises = sizes.map(({size, price}) =>
+                connection.query(
+                    'INSERT INTO product_sizes (productId, size, price) VALUES (?, ?, ?)',
+                    [productId, size.toUpperOnlyFirstChar(), price]
+                )
+            );
+            await Promise.all(sizePromises);
+        }
+
+        if (contents && contents.length > 0) {
+            const contentPromises = contents.map(({name, extraFee}) =>
+                connection.query(
+                    'INSERT INTO product_contents (productId, name, extraFee) VALUES (?, ?, ?)',
+                    [productId, name.toUpperOnlyFirstChar(), extraFee]
+                )
+            );
+            await Promise.all(contentPromises);
+        }
+
+        sendMessageToAllClients('newProduct', {
+            status: 'success',
+            message: 'Yeni ürün başarıyla eklendi.',
+            addedByToken: token,
+            product: await readProduct(productId)
         });
 
+    } catch (error) {
+        await sendSocketMessage(socket, type, {
+            status: 'error',
+            message: 'Ürün kaydında bir hata oluştu. Lütfen tekrar deneyiniz.',
+            error: error.message
+        });
+        console.error('Ürün kaydında bir hata oluştu:', error);
+    }
 };
+
+

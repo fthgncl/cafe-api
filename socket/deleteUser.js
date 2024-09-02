@@ -1,8 +1,8 @@
-const Users = require('../database/models/Users');
-const {sendSocketMessage, sendMessageToAllClients} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
+const { connection } = require('../database/database');
+const { sendSocketMessage, sendMessageToAllClients } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
 
-async function deleteUser(socket, {message, type, tokenData}) {
+async function deleteUser(socket, { message, type, tokenData }) {
     try {
         const permissionsControlResult = await deleteUserPermissionsControl(tokenData);
 
@@ -19,30 +19,29 @@ async function deleteUser(socket, {message, type, tokenData}) {
             return;
         }
 
-        Users.findByIdAndDelete(message.userId)
-            .then(doc => {
-                if (!doc) {
+        connection.queryAsync('DELETE FROM users WHERE id = ?', [message.userId])
+            .then(results => {
+                if (results.affectedRows === 0) {
                     sendSocketMessage(socket, type, {
                         status: 'error',
-                        message: 'Kullanıcı bulunamadı'
+                        message: 'Kullanıcı bulunamadı.'
                     });
                 } else {
                     sendMessageToAllClients(type, {
                         status: 'success',
-                        message: 'Kullanıcı silindi',
+                        message: 'Kullanıcı silindi.',
                         deletedUserId: message.userId
                     });
                 }
             })
             .catch(error => {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Kullanıcı silinirken veritabanında hata oluştu.',
-                        error: error.message
-                    });
+                sendSocketMessage(socket, type, {
+                    status: 'error',
+                    message: 'Kullanıcı silinirken veritabanında hata oluştu.',
+                    error: error.message
+                });
                 console.error('Kullanıcı silinirken veritabanında hata oluştu:', error);
             });
-
 
     } catch (error) {
         sendSocketMessage(socket, type, {
@@ -50,7 +49,7 @@ async function deleteUser(socket, {message, type, tokenData}) {
             message: 'Kullanıcı silinirken hata oluştu.',
             error: error.message
         });
-        console.error('Kullanıcı silinirken hata : ', error);
+        console.error('Kullanıcı silinirken hata:', error);
     }
 }
 
@@ -67,13 +66,12 @@ async function deleteUserPermissionsControl(tokenData) {
         return {
             status: 'success',
             message: 'Kullanıcı silmek için yeterli yetkiye sahipsiniz.'
-        }
-
+        };
     } catch (error) {
         return {
             status: 'error',
             message: 'Kullanıcı silme işlemi için yetki kontrolü sırasında bir hata meydana geldi.',
-            details: error
+            details: error.message
         };
     }
 }

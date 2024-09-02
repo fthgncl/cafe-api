@@ -13,21 +13,20 @@ const controlOrdersTable = (connection) => {
                 kitchenStatus ENUM('Beklemede', 'Hazırlanıyor', 'Hazırlandı') NOT NULL DEFAULT 'Beklemede',
                 createdDate DATETIME DEFAULT CURRENT_TIMESTAMP,
                 userId INT NOT NULL,
-                FOREIGN KEY (userId) REFERENCES users(id)
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE NO ACTION
             );
         `;
 
         // Order Items tablosunu oluştur
         const createOrderItemsTable = `
             CREATE TABLE IF NOT EXISTS order_items (
-                id INT AUTO_INCREMENT PRIMARY KEY,
                 orderId INT NOT NULL,
                 productId INT NOT NULL,
                 quantity INT NOT NULL CHECK (quantity >= 1),
                 size VARCHAR(10) NOT NULL,
                 content VARCHAR(255),
-                FOREIGN KEY (orderId) REFERENCES orders(id),
-                FOREIGN KEY (productId) REFERENCES products(id)
+                FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE NO ACTION,
+                FOREIGN KEY (productId) REFERENCES products(id) ON DELETE NO ACTION
             );
         `;
 

@@ -1,10 +1,11 @@
-const Users = require('../database/models/Users');
-const {sendSocketMessage} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
+const { connection } = require('../database/database');
+const { sendSocketMessage } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
 
 async function getUsers(socket, { type, tokenData }) {
 
     try {
+        // Kullanıcının yetkilerini kontrol et
         const hasRequiredRoles = await checkUserRoles(tokenData.id, ['sys_admin']);
 
         if (!hasRequiredRoles) {
@@ -15,7 +16,9 @@ async function getUsers(socket, { type, tokenData }) {
             return;
         }
 
-        const users = await Users.find().select('-password');
+        // Kullanıcıları sorgula
+        const query = 'SELECT id, firstname, lastname, username, phone, createdDate, permissions FROM users';
+        const users = await connection.queryAsync(query);
 
         await sendSocketMessage(socket, type, {
             status: 'success',

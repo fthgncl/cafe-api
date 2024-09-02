@@ -1,9 +1,9 @@
-const Orders = require('../database/models/Orders');
-const {sendSocketMessage,sendMessageToAllClients} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
-const {updatedOrderKitchenStatustStatus} = require("../helper/salesControl");
+const { sendSocketMessage, sendMessageToAllClients } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
+const { updatedOrderKitchenStatustStatus } = require("../helper/salesControl");
+const { connection } = require('../database/database');
 
-async function updateOrderKitchenStatus(socket, {message, type, tokenData}) {
+async function updateOrderKitchenStatus(socket, { message, type, tokenData }) {
     try {
         const permissionsControlResult = await updateOrderPaymentStatusPermissionsControl(tokenData);
 
@@ -12,51 +12,45 @@ async function updateOrderKitchenStatus(socket, {message, type, tokenData}) {
             return;
         }
 
-        Orders.findById(message.orderId)
-            .then(order => {
-                if (order && order.paymentStatus !== 'İptal Edildi') {
+        // Siparişi orderId'ye göre veritabanından al
+        const selectOrderQuery = 'SELECT * FROM orders WHERE id = ?';
+        const orderResult = await connection.queryAsync(selectOrderQuery, [message.orderId]);
 
-                    const oldKitchenStatus = order.kitchenStatus;
-                    const newKitchenStatus = message.kitchenStatus;
-                    const paymentStatus = order.paymentStatus;
-                    updatedOrderKitchenStatustStatus({...order._doc},oldKitchenStatus,newKitchenStatus,paymentStatus)
+        if (orderResult.length > 0) {
+            const order = orderResult[0];
 
-                    return Orders.findByIdAndUpdate(message.orderId, { kitchenStatus: message.kitchenStatus }, { new: true });
-                } else if (order) {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Sipariş iptal edilmiş. Güncelleme yapılamadı.'
-                    });
-                } else {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Sipariş numarası veritabanıyla eşleşmedi.'
-                    });
-                }
-            })
-            .then(updatedOrder => {
-                if (updatedOrder) {
-                    sendMessageToAllClients(type, {
-                        status: 'success',
-                        message: 'Siparişin mutfak durumu güncellendi.',
-                        orderInfo: {
-                            id: updatedOrder.id,
-                            newKitchenStatus: updatedOrder.kitchenStatus
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                if (error.message !== 'Sipariş iptal edildi, güncelleme yapılmadı.' && error.message !== 'Sipariş bulunamadı.') {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Sipariş güncellenirken veritabanında hata oluştu.',
-                        error: error.message
-                    });
-                }
-                console.error('Güncelleme sırasında bir hata oluştu:', error);
+            if (order.paymentStatus !== 'İptal Edildi') {
+                const oldKitchenStatus = order.kitchenStatus;
+                const newKitchenStatus = message.kitchenStatus;
+                const paymentStatus = order.paymentStatus;
+
+                // Mutfak durumu güncellemesini gerçekleştir
+                updatedOrderKitchenStatustStatus({ ...order }, oldKitchenStatus, newKitchenStatus, paymentStatus);
+
+                const updateOrderQuery = 'UPDATE orders SET kitchenStatus = ? WHERE id = ?';
+                await connection.queryAsync(updateOrderQuery, [message.kitchenStatus, message.orderId]);
+
+                // Güncellenmiş sipariş bilgisi ile tüm istemcilere mesaj gönder
+                sendMessageToAllClients(type, {
+                    status: 'success',
+                    message: 'Siparişin mutfak durumu güncellendi.',
+                    orderInfo: {
+                        id: order.id,
+                        newKitchenStatus: message.kitchenStatus
+                    }
+                });
+            } else {
+                sendSocketMessage(socket, type, {
+                    status: 'error',
+                    message: 'Sipariş iptal edilmiş. Güncelleme yapılamadı.'
+                });
+            }
+        } else {
+            sendSocketMessage(socket, type, {
+                status: 'error',
+                message: 'Sipariş numarası veritabanıyla eşleşmedi.'
             });
-
+        }
 
     } catch (error) {
         sendSocketMessage(socket, type, {
@@ -64,7 +58,7 @@ async function updateOrderKitchenStatus(socket, {message, type, tokenData}) {
             message: 'Sipariş mutfak durumu güncellenirken hata oluştu.',
             error: error.message
         });
-        console.error('Sipariş mutfak durumu güncellenirken hata : ', error);
+        console.error('Sipariş mutfak durumu güncellenirken hata: ', error);
     }
 }
 
@@ -81,7 +75,7 @@ async function updateOrderPaymentStatusPermissionsControl(tokenData) {
         return {
             status: 'success',
             message: 'Siparişin mutfak durumunu güncellemek için yeterli yetkiye sahipsiniz.'
-        }
+        };
 
     } catch (error) {
         return {

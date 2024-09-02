@@ -1,5 +1,6 @@
 const User = require('../database/models/Users');
 const {permissions} = require('../config.json');
+const { connection } = require('../database/database');
 
 function addUserPermissions(userId, newPermissions) {
     return new Promise((resolve, reject) => {
@@ -41,27 +42,42 @@ function removeUserPermissions(userId, removePermissions) {
     });
 }
 
-function readUserPermissions(userId) {
-
+const readUserPermissions = (userId) => {
     return new Promise((resolve, reject) => {
-        User.findById(userId)
-            .then(user => {
-                resolve({
-                    status: 200,
-                    message: 'Kullanıcı yetkileri okundu',
-                    permissions: user.permissions
+        // Kullanıcıyı ID'ye göre bulmak için sorgu oluştur
+        const query = `SELECT permissions FROM users WHERE id = ?`;
+
+        // Sorguyu çalıştır
+        connection.query(query, [userId], (err, results) => {
+            if (err) {
+                return reject({
+                    status: 500,
+                    message: 'Veritabanı hatası sırasında kullanıcı yetkileri okunamadı.',
+                    error: err
                 });
-            }).catch(error => {
-            reject({
-                status: 404,
-                message: `Kullanıcı bilgileri veri tabanında bulunamadı (userId:${userId})`, // TODO: kullanıcı veritabanında bulunamazsa oturumunu kapattır. Yeniden giriş yapsın.
-                error
+            }
+
+            if (results.length === 0) {
+                // Kullanıcı bulunamazsa
+                return reject({
+                    status: 404,
+                    message: `Kullanıcı bilgileri veri tabanında bulunamadı (userId: ${userId})`,
+                    error: 'Kullanıcı bulunamadı'
+                });
+            }
+
+            // Kullanıcı bulundu ve yetkileri alındı
+            resolve({
+                status: 200,
+                message: 'Kullanıcı yetkileri okundu',
+                permissions: results[0].permissions
             });
         });
-
     });
+};
 
-}
+module.exports = readUserPermissions;
+
 
 function checkRoles(permissionsString) {
     const roles = [];

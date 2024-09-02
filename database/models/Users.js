@@ -55,7 +55,7 @@ const controlUsersTable = (connection) => {
 
                     const inserDefaultAdminUser = `
                         INSERT INTO users (firstname, lastname, username, phone, password, permissions)
-                        VALUES ('admin', 'admin', 'admin', 'test' , '${bcryptPass}', 'a');
+                        VALUES ('admin', 'admin', 'admin', '5551112233' , '${bcryptPass}', 'a');
                     `;
 
                     connection.query(inserDefaultAdminUser, (err) => {

@@ -2,7 +2,6 @@ const bcrypt = require('bcryptjs');
 const { sendSocketMessage } = require('../helper/socket');
 const { tokenLifeTimeMinute } = require('../config.json');
 const { encryptData } = require('../helper/crypto');
-const mysql = require('mysql');
 
 module.exports = function login(socket, dbConnection, data) {
     const { username, password } = data.message;

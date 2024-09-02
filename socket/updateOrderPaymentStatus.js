@@ -1,54 +1,99 @@
-const Orders = require('../database/models/Orders');
-const {sendSocketMessage,sendMessageToAllClients} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
-const { updatedOrderPaymentStatus } = require("./../helper/salesControl")
+const { sendSocketMessage, sendMessageToAllClients } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
+const { updatedOrderPaymentStatus } = require("./../helper/salesControl");
+const { connection } = require('../database/database');
 
-async function updateOrderPaymentStatus(socket, {message, type, tokenData}) {
+async function updateOrderPaymentStatus(socket, { message, type, tokenData }) {
     try {
+        // Yetki kontrolü
         const permissionsControlResult = await updateOrderPaymentStatusPermissionsControl(tokenData);
         if (permissionsControlResult.status !== 'success') {
             sendSocketMessage(socket, type, permissionsControlResult);
             return;
         }
 
-        Orders.findByIdAndUpdate(message.orderId, {paymentStatus:message.paymentStatus}, {new:false})
-            .then(updatedOrder => {
-                if (updatedOrder) {
+        const { orderId, paymentStatus } = message;
 
-                    const oldPaymentStatus = updatedOrder.paymentStatus;
-                    const newPaymentStatus = message.paymentStatus;
-                    const kitchenStatus = updatedOrder.kitchenStatus;
-                    updatedOrder = { ...updatedOrder._doc , paymentStatus:message.paymentStatus}
-                    updatedOrderPaymentStatus(updatedOrder,oldPaymentStatus,newPaymentStatus,kitchenStatus);
+        try {
+            // Siparişi güncelle
+            const result = await connection.queryAsync(
+                'UPDATE orders SET paymentStatus = ? WHERE id = ?',
+                [paymentStatus, orderId]
+            );
 
-                    sendMessageToAllClients(type, {
-                        status: 'success',
-                        message: 'Siparişin ödeme durumu güncellendi.',
-                        updatedOrder
-                    });
-                } else {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Sipariş numarası veritabanıyla eşleşmedi.'
-                    });
-                }
-            })
-            .catch(error => {
+            if (result.affectedRows === 0) {
                 sendSocketMessage(socket, type, {
                     status: 'error',
-                    message: 'Sipariş güncellenirken veritabanında hata oluştu.',
-                    error: error.message
+                    message: 'Sipariş numarası veritabanıyla eşleşmedi.'
                 });
-                console.error('Güncelleme sırasında bir hata oluştu:', error);
+                return;
+            }
+
+            // Güncellenmiş siparişi al
+            const updatedOrderRows = await connection.queryAsync(
+                'SELECT * FROM orders WHERE id = ?',
+                [orderId]
+            );
+
+            if (updatedOrderRows.length === 0) {
+                sendSocketMessage(socket, type, {
+                    status: 'error',
+                    message: 'Güncellenmiş sipariş verileri alınamadı.'
+                });
+                return;
+            }
+
+            let updatedOrder = updatedOrderRows[0];
+            const oldPaymentStatus = updatedOrder.paymentStatus;
+            const newPaymentStatus = paymentStatus;
+            const kitchenStatus = updatedOrder.kitchenStatus;
+
+            // Siparişe ait ürünleri al
+            const orderItems = await connection.queryAsync(
+                'SELECT * FROM order_items WHERE orderId = ?',
+                [orderId]
+            );
+
+            // Her bir ürün için ürün adını al ve `updatedOrder` objesine ekle
+            const itemsWithProductNames = await Promise.all(orderItems.map(async item => {
+                const productRows = await connection.queryAsync(
+                    'SELECT productName FROM products WHERE id = ?',
+                    [item.productId]
+                );
+
+                const productName = productRows.length > 0 ? productRows[0].productName : 'Bilinmeyen Ürün';
+
+                return {
+                    ...item,
+                    productName
+                };
+            }));
+
+            // `updatedOrder` objesine ürünleri ekle
+            updatedOrder = { ...updatedOrder, paymentStatus, items: itemsWithProductNames };
+            updatedOrderPaymentStatus(updatedOrder, oldPaymentStatus, newPaymentStatus, kitchenStatus);
+
+            sendMessageToAllClients(type, {
+                status: 'success',
+                message: 'Siparişin ödeme durumu güncellendi.',
+                updatedOrder
             });
 
+        } catch (error) {
+            sendSocketMessage(socket, type, {
+                status: 'error',
+                message: 'Sipariş güncellenirken veritabanında hata oluştu.',
+                error: error.message
+            });
+            console.error('Güncelleme sırasında bir hata oluştu:', error);
+        }
     } catch (error) {
         sendSocketMessage(socket, type, {
             status: 'error',
-            message: 'Sipariş mutfak durumu güncellenirken hata oluştu.',
+            message: 'Sipariş ödeme durumu güncellenirken hata oluştu.',
             error: error.message
         });
-        console.error('Sipariş mutfak durumu güncellenirken hata : ', error);
+        console.error('Sipariş ödeme durumu güncellenirken hata : ', error);
     }
 }
 
@@ -65,8 +110,7 @@ async function updateOrderPaymentStatusPermissionsControl(tokenData) {
         return {
             status: 'success',
             message: 'Sipariş ödeme durumunu güncellemek için yeterli yetkiye sahipsiniz.'
-        }
-
+        };
     } catch (error) {
         return {
             status: 'error',

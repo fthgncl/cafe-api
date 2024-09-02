@@ -1,6 +1,6 @@
-const Users = require('../database/models/Users');
-const {sendSocketMessage} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
+const { connection } = require('../database/database');
+const { sendSocketMessage } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
 
 async function getUser(socket, { message, type, tokenData }) {
     try {
@@ -14,7 +14,15 @@ async function getUser(socket, { message, type, tokenData }) {
             return;
         }
 
-        const user = await Users.findById(message.userId).select('-password');
+        const [user] = await connection.queryAsync('SELECT id, firstname, lastname, username, phone, createdDate, permissions FROM users WHERE id = ?', [message.userId]);
+
+        if (!user) {
+            await sendSocketMessage(socket, type, {
+                status: 'error',
+                message: 'Kullanıcı bulunamadı.'
+            });
+            return;
+        }
 
         await sendSocketMessage(socket, type, {
             status: 'success',

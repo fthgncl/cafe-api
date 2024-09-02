@@ -1,9 +1,10 @@
-const Products = require('../database/models/Products');
-const {sendSocketMessage, sendMessageToAllClients} = require("../helper/socket");
-const {checkUserRoles} = require("../helper/permissionManager");
+const { connection } = require('../database/database');
+const { sendSocketMessage, sendMessageToAllClients } = require("../helper/socket");
+const { checkUserRoles } = require("../helper/permissionManager");
 
-async function deleteProduct(socket, {message, type, tokenData}) {
+async function deleteProduct(socket, { message, type, tokenData }) {
     try {
+        // Ürün silme işlemi için yetki kontrolü yap
         const permissionsControlResult = await deleteProductPermissionsControl(tokenData);
 
         if (permissionsControlResult.status !== 'success') {
@@ -11,43 +12,64 @@ async function deleteProduct(socket, {message, type, tokenData}) {
             return;
         }
 
-        console.log(message);
+        const productId = message.productId;
 
-        Products.findByIdAndDelete(message.productId)
-            .then(doc => {
-                if (!doc) {
-                    sendSocketMessage(socket, type, {
-                        status: 'error',
-                        message: 'Ürün bulunamadı'
-                    });
-                } else {
-                    sendMessageToAllClients(type, {
-                        status: 'success',
-                        message: 'Bir ürün silindi',
-                        deletedProductId: message.productId
-                    });
-                }
-            })
-            .catch(error => {
+        try {
+
+            // Ürüne bağlı product_contents tablosundan kayıtları sil
+            await connection.queryAsync(
+                'DELETE FROM product_contents WHERE productId = ?',
+                [productId]
+            );
+
+
+            // Ürüne bağlı product_sizes tablosundan kayıtları sil
+            await connection.queryAsync(
+                'DELETE FROM product_sizes WHERE productId = ?',
+                [productId]
+            );
+
+            // Ürünü products tablosundan sil
+            const deleteProductResult = await connection.queryAsync(
+                'DELETE FROM products WHERE id = ?',
+                [productId]
+            );
+
+            if (deleteProductResult.affectedRows === 0) {
+                // Ürün bulunamadıysa hata mesajı gönder
                 sendSocketMessage(socket, type, {
                     status: 'error',
-                    message: 'Ürün silinirken veritabanında hata oluştu.',
-                    error: error.message
+                    message: 'Ürün bulunamadı'
                 });
-                console.error('Ürün silinirken veritabanında hata oluştu:', error);
-            });
+            } else {
+                // Başarılı silme işlemi sonrasında tüm istemcilere mesaj gönder
+                sendMessageToAllClients(type, {
+                    status: 'success',
+                    message: 'Bir ürün ve ona bağlı veriler silindi',
+                    deletedProductId: productId
+                });
+            }
 
+        } catch (err) {
+            sendSocketMessage(socket, type, {
+                status: 'error',
+                message: 'Ürün veya ona bağlı veriler silinirken veritabanında hata oluştu.',
+                error: err.message
+            });
+            console.error('Veritabanı işlemi sırasında hata oluştu:', err);
+        }
 
     } catch (error) {
         sendSocketMessage(socket, type, {
             status: 'error',
-            message: 'Kullanıcı silinirken hata oluştu.',
+            message: 'Ürün silinirken bir hata oluştu.',
             error: error.message
         });
-        console.error('Kullanıcı silinirken hata : ', error);
+        console.error('Ürün silinirken hata oluştu:', error);
     }
 }
 
+// Ürün silme işlemi için yetki kontrolü
 async function deleteProductPermissionsControl(tokenData) {
     try {
         const hasRequiredRoles = await checkUserRoles(tokenData.id, ['admin']);
@@ -61,7 +83,7 @@ async function deleteProductPermissionsControl(tokenData) {
         return {
             status: 'success',
             message: 'Ürün silmek için yeterli yetkiye sahipsiniz.'
-        }
+        };
 
     } catch (error) {
         return {
