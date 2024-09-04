@@ -12,7 +12,7 @@
     "database" : "cafe1908",
     "port": 3306
   },
-  "tokenLifeTimeMinute": 60,
+  "tokenLifeTimeMinute": 45,
   "cryptoSecretKey": "1908Cafe!",
   "permissions": {
     "sys_admin": {
