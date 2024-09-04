@@ -1,6 +1,6 @@
 {
   "socket": {
-    "port": 8080
+    "port": 1908
   },
   "mysqlDatabase": {
     "host"     : "127.0.0.1",
