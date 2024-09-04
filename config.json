@@ -2,9 +2,6 @@
   "socket": {
     "port": 8080
   },
-  "webServer": {
-    "url": "http://localhost:1908"
-  },
   "mysqlDatabase": {
     "host"     : "127.0.0.1",
     "user"     : "root",
