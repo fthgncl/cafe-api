@@ -41,8 +41,11 @@ module.exports = function login(socket, dbConnection, data) {
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (isPasswordValid) {
             const exp = tokenLifeTimeMinute * 60000 + Date.now();
+            const tokenLifeTime = tokenLifeTimeMinute * 60000;
             const userTokenData = {
                 id: user.id,
+                createdDate: Date.now(),
+                tokenLifeTime,
                 exp
             };
 
@@ -56,7 +59,7 @@ module.exports = function login(socket, dbConnection, data) {
                     username: user.username,
                     permissions: user.permissions,
                     token,
-                    exp
+                    tokenLifeTime
                 }
             });
         } else {

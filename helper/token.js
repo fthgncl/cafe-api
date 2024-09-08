@@ -26,12 +26,13 @@ function getTokenData(token){
 
 function updateToken(socket, {token , tokenData}){
     const exp = tokenLifeTimeMinute * 60000 + Date.now();
-    const newTokenData = { ...tokenData, exp }
+    const tokenLifeTime = tokenLifeTimeMinute * 60000;
+    const newTokenData = { ...tokenData, exp, tokenLifeTime }
     const newToken = encryptData(JSON.stringify(newTokenData))
     const newUserProps = {
         token : newToken,
         oldToken : token,
-        exp
+        tokenLifeTime
     }
     sendSocketMessage(socket, 'updateToken', newUserProps);
 }
