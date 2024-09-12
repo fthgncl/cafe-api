@@ -76,7 +76,7 @@ module.exports = async function updateUser(socket, { message, type, tokenData, t
         sendSocketMessage(socket, type, {
             status: 'error',
             message: 'Kullanıcı bilgileri güncellenemedi.',
-            error: error.message
+            error
         });
         console.error('Kullanıcı bilgileri güncellenirken hata oluştu:', error);
     }
