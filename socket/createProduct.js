@@ -50,7 +50,7 @@ module.exports = async function createProduct(socket, {message, type, tokenData,
         await sendSocketMessage(socket, type, {
             status: 'error',
             message: 'Ürün kaydında bir hata oluştu. Lütfen tekrar deneyiniz.',
-            error: error.message
+            error
         });
         console.error('Ürün kaydında bir hata oluştu:', error);
     }

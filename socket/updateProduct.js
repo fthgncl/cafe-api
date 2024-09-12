@@ -89,7 +89,7 @@ module.exports = async function updateProduct(socket, { message, type, tokenData
         sendSocketMessage(socket, type, {
             status: 'error',
             message: 'Ürün bilgileri güncellenemedi.',
-            error: error.message
+            error
         });
         console.error('Ürün bilgileri güncellenirken hata oluştu:', error);
     }
