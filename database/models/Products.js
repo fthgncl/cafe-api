@@ -3,7 +3,7 @@ const controlProductsTable = (connection) => {
         const createProductsTable = `
             CREATE TABLE IF NOT EXISTS products (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                productName VARCHAR(20) NOT NULL UNIQUE,
+                productName VARCHAR(30) NOT NULL UNIQUE,
                 productCategory VARCHAR(20) NOT NULL,
                 createdDate DATETIME DEFAULT CURRENT_TIMESTAMP
             );
