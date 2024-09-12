@@ -14,7 +14,7 @@ const controlProductsTable = (connection) => {
                 productId INT NOT NULL,
                 size VARCHAR(10) NOT NULL,
                 price DECIMAL(10, 2) DEFAULT 0 CHECK (price >= 0),
-                FOREIGN KEY (productId) REFERENCES products(id) ON DELETE NO ACTION
+                FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
             );
         `;
 
@@ -23,7 +23,7 @@ const controlProductsTable = (connection) => {
                 productId INT NOT NULL,
                 name VARCHAR(50) NOT NULL,
                 extraFee DECIMAL(10, 2) DEFAULT 0 CHECK (extraFee >= 0),
-                FOREIGN KEY (productId) REFERENCES products(id) ON DELETE NO ACTION
+                FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
             );
         `;
 
