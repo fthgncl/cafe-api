@@ -15,13 +15,27 @@ async function updateOrderPaymentStatus(socket, { message, type, tokenData }) {
         const { orderId, paymentStatus } = message;
 
         try {
+            // Güncellenmeden önceki siparişi al
+            const oldOrderData = await connection.queryAsync(
+                'SELECT * FROM orders WHERE id = ?',
+                [orderId]
+            );
+
+            if (oldOrderData.length === 0) {
+                sendSocketMessage(socket, type, {
+                    status: 'error',
+                    message: 'Sipariş bulunamadı.'
+                });
+                return;
+            }
+
             // Siparişi güncelle
-            const result = await connection.queryAsync(
+            const updateResult = await connection.queryAsync(
                 'UPDATE orders SET paymentStatus = ? WHERE id = ?',
                 [paymentStatus, orderId]
             );
 
-            if (result.affectedRows === 0) {
+            if (updateResult.affectedRows === 0) {
                 sendSocketMessage(socket, type, {
                     status: 'error',
                     message: 'Sipariş numarası veritabanıyla eşleşmedi.'
@@ -29,24 +43,16 @@ async function updateOrderPaymentStatus(socket, { message, type, tokenData }) {
                 return;
             }
 
-            // Güncellenmiş siparişi al
-            const updatedOrderRows = await connection.queryAsync(
+            // Güncellenmiş siparişi tekrar sorgula
+            const updatedOrderData = await connection.queryAsync(
                 'SELECT * FROM orders WHERE id = ?',
                 [orderId]
             );
 
-            if (updatedOrderRows.length === 0) {
-                sendSocketMessage(socket, type, {
-                    status: 'error',
-                    message: 'Güncellenmiş sipariş verileri alınamadı.'
-                });
-                return;
-            }
-
-            let updatedOrder = updatedOrderRows[0];
-            const oldPaymentStatus = updatedOrder.paymentStatus;
+            const updatedOrder = updatedOrderData[0];
+            const oldPaymentStatus = oldOrderData[0].paymentStatus;
             const newPaymentStatus = paymentStatus;
-            const kitchenStatus = updatedOrder.kitchenStatus;
+            const kitchenStatus = oldOrderData[0].kitchenStatus;
 
             // Siparişe ait ürünleri al
             const orderItems = await connection.queryAsync(
@@ -70,7 +76,7 @@ async function updateOrderPaymentStatus(socket, { message, type, tokenData }) {
             }));
 
             // `updatedOrder` objesine ürünleri ekle
-            updatedOrder = { ...updatedOrder, paymentStatus, items: itemsWithProductNames };
+            updatedOrder.items = itemsWithProductNames;
             updatedOrderPaymentStatus(updatedOrder, oldPaymentStatus, newPaymentStatus, kitchenStatus);
 
             sendMessageToAllClients(type, {
