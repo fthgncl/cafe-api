@@ -12,8 +12,8 @@ const controlOrdersTable = (connection) => {
                 totalPrice DECIMAL(10, 2) NOT NULL CHECK (totalPrice >= 0),
                 kitchenStatus ENUM('Beklemede', 'Hazırlanıyor', 'Hazırlandı') NOT NULL DEFAULT 'Beklemede',
                 createdDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-                userId INT NOT NULL,
-                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE NO ACTION
+                userId INT,
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
             );
         `;
 

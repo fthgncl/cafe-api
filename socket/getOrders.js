@@ -64,7 +64,8 @@ async function getOrders(socket, { type, tokenData }) {
                 delete orderObject.kitchenStatus;
             }
 
-            const createdUser = userMap.get(orderObject.userId.toString());
+            const userId = orderObject.userId ? orderObject.userId.toString() : null;
+            const createdUser = userId ? userMap.get(userId) : null;
             const items = orderItems
                 .filter(item => item.orderId === orderObject.id)
                 .map(item => ({
