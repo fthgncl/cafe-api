@@ -70,7 +70,7 @@ async function getOrders(socket, { type, tokenData }) {
                 .filter(item => item.orderId === orderObject.id)
                 .map(item => ({
                     ...item,
-                    productName: productMap.get(item.productId) || 'Ürün ismi bulunamadı'
+                    productName: productMap.get(item.productId) || 'Ürün bulunamadı'
                 }));
 
             return {

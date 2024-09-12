@@ -21,12 +21,12 @@ const controlOrdersTable = (connection) => {
         const createOrderItemsTable = `
             CREATE TABLE IF NOT EXISTS order_items (
                 orderId INT NOT NULL,
-                productId INT NOT NULL,
+                productId INT NULL,
                 quantity INT NOT NULL CHECK (quantity >= 1),
                 size VARCHAR(10) NOT NULL,
                 content VARCHAR(255),
-                FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE NO ACTION,
-                FOREIGN KEY (productId) REFERENCES products(id) ON DELETE NO ACTION
+                FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE CASCADE,
+                FOREIGN KEY (productId) REFERENCES products(id) ON DELETE SET NULL
             );
         `;
 
