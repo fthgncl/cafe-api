@@ -1,8 +1,8 @@
-const { connection } = require('../database/database');
-const { sendSocketMessage } = require("../helper/socket");
-const { checkUserRoles } = require("../helper/permissionManager");
+const {connection} = require('../database/database');
+const {sendSocketMessage} = require("../helper/socket");
+const {checkUserRoles} = require("../helper/permissionManager");
 
-async function getSales(socket, { message, type, tokenData }) {
+async function getSales(socket, {message, type, tokenData}) {
     try {
         const hasRequiredRoles = await checkUserRoles(tokenData.id, ['report_viewer']);
 
@@ -15,14 +15,11 @@ async function getSales(socket, { message, type, tokenData }) {
         }
 
 
-        let { startDate, endDate } = message;
-
-        // startDate ve endDate aynı ise endDate'e bir gün ekle
-        if (startDate === endDate) {
-            const endDateObj = new Date(endDate);
-            endDateObj.setDate(endDateObj.getDate() + 1);
-            endDate = endDateObj.toISOString(); // ISO formatında güncellenmiş endDate
-        }
+        let {startDate, endDate} = message;
+        
+        const endDateObj = new Date(endDate);
+        endDateObj.setDate(endDateObj.getDate() + 1);
+        endDate = endDateObj.toISOString(); // ISO formatında güncellenmiş endDate
 
         // Tarih aralığına göre satışları alacak sorgu
         const salesQuery = `
