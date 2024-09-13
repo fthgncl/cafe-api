@@ -18,6 +18,7 @@ const deleteProduct = require('./deleteProduct');
 const updateUser = require('./updateUser');
 const updateProduct = require('./updateProduct');
 const orderEntry = require('./orderEntry');
+const getSales = require('./getSales');
 const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
 const updateOrderDiscount = require('./updateOrderDiscount');
@@ -133,6 +134,10 @@ function startSocketServer(dbConnection) {
                         updateOrderDiscount(ws, payload);
                         break;
 
+                    // SALES REPORT PROCESS
+                    case 'getSales':
+                        getSales(ws, payload);
+                        break;
 
                     default:
                         console.error('Unknown message type:', payload.type);
