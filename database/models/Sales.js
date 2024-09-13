@@ -5,6 +5,7 @@ const controlSalesTable = (connection) => {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 orderId INT NOT NULL,
                 productId INT NULL,
+                productName VARCHAR(30) NOT NULL,
                 contentName VARCHAR(50),
                 quantity INT NOT NULL CHECK (quantity >= 1),
                 discount DECIMAL(5, 2) DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),

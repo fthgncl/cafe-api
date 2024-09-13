@@ -25,7 +25,7 @@ async function updateOrderKitchenStatus(socket, { message, type, tokenData }) {
                 const paymentStatus = order.paymentStatus;
 
                 // Mutfak durumu güncellemesini gerçekleştir
-                updatedOrderKitchenStatustStatus({ ...order }, oldKitchenStatus, newKitchenStatus, paymentStatus);
+                await updatedOrderKitchenStatustStatus({...order}, oldKitchenStatus, newKitchenStatus, paymentStatus);
 
                 const updateOrderQuery = 'UPDATE orders SET kitchenStatus = ? WHERE id = ?';
                 await connection.queryAsync(updateOrderQuery, [message.kitchenStatus, message.orderId]);

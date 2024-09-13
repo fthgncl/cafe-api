@@ -54,30 +54,7 @@ async function updateOrderPaymentStatus(socket, { message, type, tokenData }) {
             const newPaymentStatus = paymentStatus;
             const kitchenStatus = oldOrderData[0].kitchenStatus;
 
-            // Siparişe ait ürünleri al
-            const orderItems = await connection.queryAsync(
-                'SELECT * FROM order_items WHERE orderId = ?',
-                [orderId]
-            );
-
-            // Her bir ürün için ürün adını al ve `updatedOrder` objesine ekle
-            const itemsWithProductNames = await Promise.all(orderItems.map(async item => {
-                const productRows = await connection.queryAsync(
-                    'SELECT productName FROM products WHERE id = ?',
-                    [item.productId]
-                );
-
-                const productName = productRows.length > 0 ? productRows[0].productName : 'Bilinmeyen Ürün';
-
-                return {
-                    ...item,
-                    productName
-                };
-            }));
-
-            // `updatedOrder` objesine ürünleri ekle
-            updatedOrder.items = itemsWithProductNames;
-            updatedOrderPaymentStatus(updatedOrder, oldPaymentStatus, newPaymentStatus, kitchenStatus);
+            await updatedOrderPaymentStatus(updatedOrder, oldPaymentStatus, newPaymentStatus, kitchenStatus);
 
             sendMessageToAllClients(type, {
                 status: 'success',
