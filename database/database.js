@@ -4,6 +4,7 @@ const {mysqlDatabase} = require('../config.json');
 const controlUsersTable = require('./models/Users');
 const controlOrdersTable = require('./models/Orders');
 const controlProductsTable = require('./models/Products');
+const controlSalesTable = require('./models/Sales');
 
 let connection;
 let isConnected = false;
@@ -96,7 +97,8 @@ function controlDataTables(conn) {
                 Promise.all([
                     controlUsersTable(conn),
                     controlProductsTable(conn),
-                    controlOrdersTable(conn)
+                    controlOrdersTable(conn),
+                    controlSalesTable(conn)
                 ])
                     .then(results => {
                         resolve({
