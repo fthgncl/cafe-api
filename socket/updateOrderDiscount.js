@@ -36,6 +36,14 @@ async function updateOrderDiscount(socket, { message, type, tokenData }) {
         if (orderResult.length > 0) {
             const order = orderResult[0];
 
+            if ( order.paymentStatus === 'Ödendi' || order.paymentStatus === 'Hediye' ){
+                sendSocketMessage(socket, type, {
+                    status: 'warning',
+                    message: order.paymentStatus === 'Ödendi' ? 'Ücreti ödenen siparişin indirimi güncellenemez.':'Hediye durumundaki siparişin indirimi güncellenemez.'
+                });
+                return;
+            }
+
             const updateProps = {
                 discount,
                 discountedPrice: order.totalPrice - order.totalPrice * discount / 100
@@ -46,8 +54,8 @@ async function updateOrderDiscount(socket, { message, type, tokenData }) {
             await connection.queryAsync(updateOrderQuery, [updateProps.discount, updateProps.discountedPrice, orderId]);
 
             sendMessageToAllClients(type, {
-                status: 'success',
-                message: 'İndirim başarıyla uygulandı.',
+                status: 'info',
+                message: 'İndirim güncellendi.',
                 orderId,
                 newPrices: updateProps
             });
