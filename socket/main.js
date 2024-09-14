@@ -18,7 +18,7 @@ const deleteProduct = require('./deleteProduct');
 const updateUser = require('./updateUser');
 const updateProduct = require('./updateProduct');
 const orderEntry = require('./orderEntry');
-const getSales = require('./getSales');
+const getAnalyticsData = require('./getAnalyticsData');
 const updateOrderPaymentStatus = require('./updateOrderPaymentStatus');
 const updateOrderKitchenStatus = require('./updateOrderKitchenStatus');
 const updateOrderDiscount = require('./updateOrderDiscount');
@@ -135,8 +135,8 @@ function startSocketServer(dbConnection) {
                         break;
 
                     // SALES REPORT PROCESS
-                    case 'getSales':
-                        getSales(ws, payload);
+                    case 'getAnalyticsData':
+                        getAnalyticsData(ws, payload);
                         break;
 
                     default:

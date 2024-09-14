@@ -2,7 +2,7 @@ const {connection} = require('../database/database');
 const {sendSocketMessage} = require("../helper/socket");
 const {checkUserRoles} = require("../helper/permissionManager");
 
-async function getSales(socket, {message, type, tokenData}) {
+async function getAnalyticsData(socket, {message, type, tokenData}) {
     try {
         const hasRequiredRoles = await checkUserRoles(tokenData.id, ['report_viewer']);
 
@@ -21,29 +21,31 @@ async function getSales(socket, {message, type, tokenData}) {
         endDateObj.setDate(endDateObj.getDate() + 1);
         endDate = endDateObj.toISOString(); // ISO formatında güncellenmiş endDate
 
-        // Tarih aralığına göre satışları alacak sorgu
-        const salesQuery = `
-            SELECT * FROM sales
-            WHERE createdDate BETWEEN ? AND ?
-        `;
+        try {
+            const sales = await connection.queryAsync(`SELECT * FROM sales WHERE createdDate BETWEEN ? AND ?`, [startDate, endDate]);
+            const [orderData] = await connection.queryAsync(`
+                SELECT COUNT(id) AS count 
+                FROM orders 
+                WHERE (paymentStatus = 'Hediye' OR paymentStatus = 'Ödendi') 
+                AND kitchenStatus = 'Hazırlandı'
+                AND createdDate BETWEEN ? AND ?`, [startDate, endDate]);
 
-        const sales = await connection.queryAsync(salesQuery, [startDate, endDate]);
-
-        if (!sales || sales.length === 0) {
             await sendSocketMessage(socket, type, {
                 status: 'success',
-                message: 'Bu tarih aralığında satış kaydı bulunamadı.',
-                sales:[]
+                message: 'Satış kayıtları başarıyla alındı.',
+                data: {
+                    sales,
+                    orderCount: orderData.count
+                }
             });
-            return;
-        }
 
-        // Satış kayıtları başarıyla alındı, kullanıcıya gönderiliyor
-        await sendSocketMessage(socket, type, {
-            status: 'success',
-            message: 'Satış kayıtları başarıyla alındı.',
-            sales
-        });
+        } catch (error) {
+            await sendSocketMessage(socket, type, {
+                status: 'error',
+                message: 'Veriler okunurken hata oluştu.',
+                error
+            });
+        }
 
     } catch (error) {
         console.error('Satış kayıtları veri tabanından alınamadı:', error);
@@ -54,4 +56,4 @@ async function getSales(socket, {message, type, tokenData}) {
     }
 }
 
-module.exports = getSales;
+module.exports = getAnalyticsData;
