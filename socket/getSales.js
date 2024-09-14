@@ -31,8 +31,9 @@ async function getSales(socket, {message, type, tokenData}) {
 
         if (!sales || sales.length === 0) {
             await sendSocketMessage(socket, type, {
-                status: 'error',
-                message: 'Bu tarih aralığında satış kaydı bulunamadı.'
+                status: 'success',
+                message: 'Bu tarih aralığında satış kaydı bulunamadı.',
+                sales:[]
             });
             return;
         }
