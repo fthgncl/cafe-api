@@ -1,4 +1,5 @@
 const {connection} = require("../database/database");
+const {sendMessageToAllClients} = require("./socket");
 const isGiftorPayment = (status) => (status === 'Ödendi' || status === 'Hediye');
 const isPendingOrPreparing = (status) => (status === 'Beklemede' || status === 'Hazırlanıyor');
 
@@ -62,6 +63,7 @@ async function onOrderCancelled(order) {
             'DELETE FROM sales WHERE orderId = ?',
             [order.id]
         );
+        sendUpdatedSalesMessage();
     } catch (error) {
         console.error('Sales tablosundan kayıt silinirken hata oluştu:', error);
     }
@@ -91,7 +93,7 @@ async function onOrderSold(order) {
                 [orderId, productId, productName, contentName, quantity, discount, discountedPrice, totalPrice]
             );
         }
-
+        sendUpdatedSalesMessage();
     } catch (error) {
         console.error('Satış kaydedilirken hata oluştu:', error);
     }
@@ -121,5 +123,14 @@ async function calculateProductPrice(productId,size,content,quantity){
     return (sizePrice + contentFee) * quantity;
 }
 
+function sendUpdatedSalesMessage(){
+    setTimeout(() => {
+        sendMessageToAllClients('updatedSales', {
+            status: 'success',
+            message: 'Sales tablosu güncellendi',
+        });
+    }, 1000); // 1000 milisaniye = 1 saniye
+
+}
 
 module.exports = { updatedOrderPaymentStatus, updatedOrderKitchenStatustStatus }
