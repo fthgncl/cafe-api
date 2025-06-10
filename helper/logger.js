@@ -14,7 +14,7 @@ async function logError(message, error = null) {
     // Log dosyası için tarih
     const today = `${year}-${month}-${day}`; // YYYY-MM-DD formatında
     const logFileName = `error-${today}.log`;
-    const logsDir = path.join(__dirname, '../../logs');
+    const logsDir = path.join(__dirname, '../logs');
     const logFilePath = path.join(logsDir, logFileName);
 
     // Log dizini oluşturma
