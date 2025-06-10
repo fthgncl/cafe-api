@@ -1,4 +1,5 @@
 const { connectDatabase } = require('./database/database');
+const logError = require('./helper/logger');
 
 (async () => {
     try {
@@ -11,7 +12,7 @@ const { connectDatabase } = require('./database/database');
         const startSocketServer = require('./socket/main');
         startSocketServer(connection);
     } catch (error) {
-        console.log(error);
+        await logError('Veritabanına bağlanırken hata oluştu', error);
     }
 })();
 
