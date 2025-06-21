@@ -4,8 +4,12 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "pm2 start app.js --name cafe-api",
+    "dev": "nodemon app.js",
+    "stop": "pm2 stop cafe-api",
+    "restart": "pm2 restart cafe-api",
+    "delete": "pm2 delete cafe-api",
+    "logs": "pm2 logs cafe-api"
   },
   "keywords": [],
   "author": "",

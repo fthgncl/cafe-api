@@ -1,6 +1,16 @@
 const { connectDatabase } = require('./database/database');
 const logError = require('./helper/logger');
 
+process.on('uncaughtException', async (err) => {
+    await logError('Uygulama uncaughtException hatası ile kapanıyor', err);
+    process.exit(1); // Uygulamanın kapanmasına izin ver, çünkü bu tür hatalar genelde düzeltilmeli
+});
+
+process.on('unhandledRejection', async (reason) => {
+    await logError('Uygulama unhandledRejection hatası ile karşılaştı', reason);
+    process.exit(1);
+});
+
 (async () => {
     try {
         const {connection , status , message} = await connectDatabase();
